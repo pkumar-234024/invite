@@ -7,6 +7,7 @@ import { indexedDBService } from './indexedDBService';
 import { renderSampoornaKashi } from '../templates/renderers/sampoornaKashi';
 import { renderDivineTemple } from '../templates/renderers/divineTemple';
 import { renderSampoornaHindi } from '../templates/renderers/sampoornaHindi';
+import { renderSampoornaSarvajan } from '../templates/renderers/sampoornaSarvajan';
 import { renderRoyalCreamPalace } from '../templates/renderers/royalCreamPalace';
 import { renderCinematicWedding } from '../templates/renderers/cinematicWedding';
 import { renderClassicIndian } from '../templates/renderers/classicIndian';
@@ -105,6 +106,9 @@ export function renderTemplateFrame(
       break;
     case 'sampoorna-hindi':
       renderSampoornaHindi(ctx, width, height, time, duration, project, images);
+      break;
+    case 'sampoorna-sarvajan':
+      renderSampoornaSarvajan(ctx, width, height, time, duration, project, images);
       break;
     case 'royal-cream-palace':
       renderRoyalCreamPalace(ctx, width, height, time, duration, project, images);
@@ -230,7 +234,7 @@ export async function generateWeddingVideo(
   if (!ctx) throw new Error('Canvas 2D context is not available.');
 
   // Audio track setup with trimming and fading
-  const audioExport = audioService.createExportAudioTrack(
+  const audioExport = await audioService.createExportAudioTrack(
     project.audio.enabled ? project.audio.trackId : 'none',
     project.audio.enabled ? project.audio.volume : 0,
     duration,

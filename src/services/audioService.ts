@@ -11,9 +11,41 @@ export interface AudioTrack {
   hindiTitle: string;
   description: string;
   tempo: number;
+  url?: string;
 }
 
 export const WEDDING_AUDIO_TRACKS: AudioTrack[] = [
+  {
+    id: 'wedding-shubh-vivah',
+    title: 'Shubh Vivah Royal Sitar & Shehnai (Signature)',
+    hindiTitle: 'शुभ विवाह शाही संगीत (मुख्य)',
+    description: 'Breathtaking authentic studio acoustic wedding score with resonant sitar, flute, and emotional strings.',
+    tempo: 78,
+    url: '/audio/andriig-wedding-wedding-music-604061.mp3',
+  },
+  {
+    id: 'wedding-celebration',
+    title: 'Divine Indian Wedding Symphony',
+    hindiTitle: 'दिव्य विवाह उत्सव संगीत',
+    description: 'Grand celebratory Indian wedding anthem with joyful rhythm, traditional bells, and melodic grandeur.',
+    tempo: 84,
+    url: '/audio/andriih-wedding-wedding-music-601619.mp3',
+  },
+  {
+    id: 'wedding-sacred-harmony',
+    title: 'Sacred Romance & Vivah Melodies',
+    hindiTitle: 'मांगलिक प्रेम एवं फेरे संगीत',
+    description: 'Heartfelt emotional acoustic strings and gentle traditional rhythm for auspicious ceremonies.',
+    tempo: 74,
+    url: '/audio/paulyudin-wedding-wedding-music-574002.mp3',
+  },
+  {
+    id: 'royal-sitar',
+    title: 'Divine Royal Sitar Raga (Procedural)',
+    hindiTitle: 'शाही सितार राग (यमन व भूपाली)',
+    description: 'Classical royal wedding Sitar with authentic Jawari harmonics and sacred Tanpura resonance.',
+    tempo: 80,
+  },
   {
     id: 'mangal-shehnai',
     title: 'Mangal Shehnai & Tanpura',
@@ -22,15 +54,8 @@ export const WEDDING_AUDIO_TRACKS: AudioTrack[] = [
     tempo: 72,
   },
   {
-    id: 'rajasthani-sitar',
-    title: 'Royal Rajasthani Sitar Raga',
-    hindiTitle: 'शाही सितार राग',
-    description: 'Majestic palace chords with resonant sitar meend and meditative golden bells.',
-    tempo: 84,
-  },
-  {
     id: 'jashn-shaadi',
-    title: 'Jashn-e-Shaadi Festive Harmony',
+    title: 'Jashn-e-Shaadi Festive Bansuri',
     hindiTitle: 'जश्न-ए-शादी बांसुरी एवं घुंघरू',
     description: 'Celebratory sweet bansuri flute notes, temple ghunghroo chimes, and joy.',
     tempo: 96,
@@ -44,6 +69,7 @@ class AudioService {
   private customAudioBuffer: AudioBuffer | null = null;
   private customAudioUrl: string | null = null;
   private isPlayingPreview: boolean = false;
+  private audioBufferCache: Map<string, AudioBuffer> = new Map();
 
   private getContext(): AudioContext {
     if (!this.audioCtx || this.audioCtx.state === 'closed') {
@@ -72,7 +98,9 @@ class AudioService {
   }
 
   /**
-   * Generates a synthesized Indian wedding melody AudioBuffer of given duration
+   * Generates a synthesized Indian wedding melody AudioBuffer of given duration.
+   * Includes high-fidelity physical modeling of Royal Wedding Sitar (Jawari harmonics,
+   * Meend glissando bends, sympathetic Taraf resonance, Chikari rhythm, and 4-string Tanpura).
    */
   createIndianMelodyBuffer(ctx: BaseAudioContext, trackId: string, durationSeconds: number): AudioBuffer {
     const sampleRate = ctx.sampleRate;
@@ -81,97 +109,207 @@ class AudioService {
     const left = audioBuffer.getChannelData(0);
     const right = audioBuffer.getChannelData(1);
 
-    // Authentic Indian Raga Bilawal / Yaman notes (Hz)
-    // Sa, Re, Ga, Ma, Pa, Dha, Ni, Sa'
-    const notesShehnai = [261.63, 293.66, 329.63, 392.00, 440.00, 523.25, 587.33, 659.25, 783.99];
-    const notesSitar = [220.00, 246.94, 277.18, 329.63, 369.99, 440.00, 493.88, 554.37];
-    const notesFlute = [329.63, 369.99, 392.00, 440.00, 493.88, 523.25, 587.33, 659.25];
+    // Normalize trackId: default to royal-sitar if unspecified or rajasthani-sitar
+    const isSitar = trackId === 'royal-sitar' || trackId === 'rajasthani-sitar' || !trackId;
+    const isShehnai = trackId === 'mangal-shehnai';
 
-    let activeNotes = notesShehnai;
-    let noteDuration = 1.2;
-    if (trackId === 'rajasthani-sitar') {
-      activeNotes = notesSitar;
-      noteDuration = 0.9;
-    } else if (trackId === 'jashn-shaadi') {
-      activeNotes = notesFlute;
-      noteDuration = 0.75;
+    // Raga Yaman & Bhupali Authentic Wedding Composition Gat (Notes with durations & Meend glissando)
+    // Sitar Notes: Ni0=246.94, Sa1=261.63, Re1=293.66, Ga1=329.63, Ma1=369.99, Pa1=392.00, Dha1=440.00, Ni1=493.88, Sa2=523.25, Re2=587.33, Ga2=659.25
+    interface NoteEvent {
+      startFreq: number;
+      endFreq: number;
+      duration: number; // in seconds
+      hasChikari?: boolean;
     }
 
-    // Tanpura Drone frequencies (Sa + Pa + Sa_octave)
-    const droneFreq1 = 130.81; // C3
-    const droneFreq2 = 196.00; // G3
-    const droneFreq3 = 261.63; // C4
+    const SITAR_COMPOSITION: NoteEvent[] = [
+      // 1. Serene Morning Alap (Ni - Re - Ga meend)
+      { startFreq: 246.94, endFreq: 293.66, duration: 1.5 },
+      { startFreq: 293.66, endFreq: 329.63, duration: 1.8, hasChikari: true },
+      { startFreq: 329.63, endFreq: 369.99, duration: 1.2 },
+      { startFreq: 369.99, endFreq: 392.00, duration: 2.0, hasChikari: true },
+      
+      // 2. Majestic Ascent to Taar Sa (Pa - Dha - Ni - Sa')
+      { startFreq: 392.00, endFreq: 440.00, duration: 1.4 },
+      { startFreq: 440.00, endFreq: 493.88, duration: 1.2 },
+      { startFreq: 493.88, endFreq: 523.25, duration: 2.2, hasChikari: true },
+      
+      // 3. Graceful Meend Descent (Sa' - Ni - Dha - Pa)
+      { startFreq: 523.25, endFreq: 493.88, duration: 1.3 },
+      { startFreq: 493.88, endFreq: 440.00, duration: 1.2 },
+      { startFreq: 440.00, endFreq: 392.00, duration: 1.6 },
+      { startFreq: 392.00, endFreq: 329.63, duration: 2.0, hasChikari: true }, // Long emotional meend from Pa down to Ga!
+      
+      // 4. Romantic Yaman Turn (Ga - Ma' - Ga - Re - Sa)
+      { startFreq: 329.63, endFreq: 369.99, duration: 1.0 },
+      { startFreq: 369.99, endFreq: 329.63, duration: 1.1 },
+      { startFreq: 329.63, endFreq: 293.66, duration: 1.3 },
+      { startFreq: 293.66, endFreq: 261.63, duration: 2.4, hasChikari: true }, // Peaceful resolution on Sa
+      
+      // 5. Joyous Bhupali Wedding Gat (Celebratory Royal Palace Melody)
+      { startFreq: 261.63, endFreq: 293.66, duration: 0.9 },
+      { startFreq: 293.66, endFreq: 329.63, duration: 0.9 },
+      { startFreq: 329.63, endFreq: 392.00, duration: 1.0, hasChikari: true },
+      { startFreq: 392.00, endFreq: 440.00, duration: 0.9 },
+      { startFreq: 440.00, endFreq: 523.25, duration: 1.4, hasChikari: true },
+      { startFreq: 523.25, endFreq: 587.33, duration: 1.0 },
+      { startFreq: 587.33, endFreq: 659.25, duration: 1.6, hasChikari: true }, // Peak high Ga' celebration
+      
+      // 6. Sparkling Jhala Cascade
+      { startFreq: 659.25, endFreq: 587.33, duration: 0.8 },
+      { startFreq: 587.33, endFreq: 523.25, duration: 0.9 },
+      { startFreq: 523.25, endFreq: 440.00, duration: 1.0 },
+      { startFreq: 440.00, endFreq: 392.00, duration: 1.1 },
+      { startFreq: 392.00, endFreq: 329.63, duration: 1.2 },
+      { startFreq: 329.63, endFreq: 293.66, duration: 1.2 },
+      { startFreq: 293.66, endFreq: 261.63, duration: 1.5, hasChikari: true },
+      
+      // 7. Auspicious Mandra Alap & Grand Cadence
+      { startFreq: 261.63, endFreq: 246.94, duration: 1.0 },
+      { startFreq: 246.94, endFreq: 220.00, duration: 1.1 },
+      { startFreq: 220.00, endFreq: 196.00, duration: 1.3 },
+      { startFreq: 196.00, endFreq: 246.94, duration: 1.2 },
+      { startFreq: 246.94, endFreq: 261.63, duration: 3.5, hasChikari: true }, // Grand final ringing Sa
+    ];
+
+    const sitarTotalCycleDuration = SITAR_COMPOSITION.reduce((acc, n) => acc + n.duration, 0);
+
+    // Fallback notes for Shehnai / Bansuri
+    const notesShehnai = [261.63, 293.66, 329.63, 392.00, 440.00, 523.25, 587.33, 659.25, 783.99];
+    const notesFlute = [329.63, 369.99, 392.00, 440.00, 493.88, 523.25, 587.33, 659.25];
 
     for (let i = 0; i < numFrames; i++) {
       const t = i / sampleRate;
 
-      // 1. Tanpura Drone & rich harmonics
-      const tanpura1 = Math.sin(2 * Math.PI * droneFreq1 * t) * 0.12;
-      const tanpura2 = Math.sin(2 * Math.PI * droneFreq2 * t * 1.002) * 0.08;
-      const tanpura3 = Math.sin(2 * Math.PI * droneFreq3 * t * 0.998) * 0.05;
-      const tanpuraShimmer = Math.sin(2 * Math.PI * (droneFreq1 * 3) * t) * 0.03 * (0.5 + 0.5 * Math.sin(2 * Math.PI * 0.4 * t));
-      const drone = tanpura1 + tanpura2 + tanpura3 + tanpuraShimmer;
+      // 1. Classical 4-String Acoustic Tanpura (G2, C3, C3 chorus, C2 Kharaj)
+      // Plucked in traditional order: 1 (Pa) -> 2 (Sa) -> 3 (Sa) -> 4 (Kharaj)
+      const tanpuraCycle = t % 4.8;
+      const tanpuraPluckIdx = Math.floor(tanpuraCycle / 1.2);
+      const tanpuraStringT = tanpuraCycle % 1.2;
+      const tanpuraDecay = Math.exp(-tanpuraStringT * 1.8);
 
-      // 2. Lead melody generator with traditional ornamentation & vibrato
-      // Melody pattern progression: loop through poetic steps
-      const melodicStep = (Math.floor(t / noteDuration) * 3 + (Math.floor(t / (noteDuration * 4)) % 2)) % activeNotes.length;
-      const baseFreq = activeNotes[melodicStep];
+      let tanpuraFreq = 130.81; // Sa
+      if (tanpuraPluckIdx === 0) tanpuraFreq = 98.00; // Pa (G2)
+      else if (tanpuraPluckIdx === 1) tanpuraFreq = 130.81; // Sa (C3)
+      else if (tanpuraPluckIdx === 2) tanpuraFreq = 131.25; // Sa with micro acoustic beat (C3)
+      else tanpuraFreq = 65.41; // Kharaj Sa (C2)
 
-      // Vibrato & meend (portamento slide)
-      const notePhase = (t % noteDuration) / noteDuration;
-      const vibrato = Math.sin(2 * Math.PI * 5.5 * t) * (notePhase > 0.3 ? 4.0 : 1.0);
-      const meend = Math.sin(Math.PI * notePhase) * (notePhase < 0.2 ? -15 : 0);
-      const leadFreq = baseFreq + vibrato + meend;
+      const tanpH1 = Math.sin(2 * Math.PI * tanpuraFreq * t);
+      const tanpH2 = Math.sin(2 * Math.PI * tanpuraFreq * 2 * t) * 0.55;
+      const tanpH3 = Math.sin(2 * Math.PI * tanpuraFreq * 3 * t) * 0.35;
+      const tanpH4 = Math.sin(2 * Math.PI * tanpuraFreq * 4 * t) * 0.18;
+      const tanpuraTone = (tanpH1 + tanpH2 + tanpH3 + tanpH4) * tanpuraDecay * 0.09;
 
-      // Envelope: gentle attack, sustained resonance, soft release
-      let envelope = 0;
-      if (notePhase < 0.15) {
-        envelope = notePhase / 0.15;
-      } else if (notePhase < 0.8) {
-        envelope = 1.0 - (notePhase - 0.15) * 0.3;
-      } else {
-        envelope = Math.max(0, 0.8 - (notePhase - 0.8) * 4);
-      }
+      // Ambient warm background drone bed
+      const ambientDrone = (
+        Math.sin(2 * Math.PI * 130.81 * t) * 0.05 +
+        Math.sin(2 * Math.PI * 196.00 * t) * 0.04 +
+        Math.sin(2 * Math.PI * 65.41 * t) * 0.03
+      );
 
-      // Timbre synthesis based on instrument
+      const drone = tanpuraTone + ambientDrone;
+
+      // 2. Sitar Lead Synthesis
       let lead = 0;
-      if (trackId === 'mangal-shehnai') {
-        // Shehnai (reed instrument with rich odd and even harmonics)
+
+      if (isSitar) {
+        // Find current note in Sitar Composition
+        const cycleT = t % sitarTotalCycleDuration;
+        let cumulativeT = 0;
+        let currentNote = SITAR_COMPOSITION[0];
+        let noteOffsetT = 0;
+
+        for (const note of SITAR_COMPOSITION) {
+          if (cycleT >= cumulativeT && cycleT < cumulativeT + note.duration) {
+            currentNote = note;
+            noteOffsetT = cycleT - cumulativeT;
+            break;
+          }
+          cumulativeT += note.duration;
+        }
+
+        const noteProgress = noteOffsetT / currentNote.duration;
+        // Smooth Meend (pitch bend glide using S-curve cosine interpolation)
+        const glide = 0.5 - 0.5 * Math.cos(Math.PI * Math.min(1, noteProgress * 1.5));
+        const baseFreq = currentNote.startFreq + (currentNote.endFreq - currentNote.startFreq) * glide;
+
+        // Vibrato on sustained portion
+        const vibrato = noteProgress > 0.3 ? Math.sin(2 * Math.PI * 5.2 * t) * (baseFreq * 0.0075) : 0;
+        const leadFreq = baseFreq + vibrato;
+
+        // Natural plucked string envelope
+        const stringDecay = Math.exp(-noteProgress * 2.8);
+        const attack = Math.min(1, noteOffsetT * 250);
+
+        // Mizrab metallic pluck transient (< 25 ms)
+        const pluck = noteOffsetT < 0.035
+          ? Math.sin(2 * Math.PI * (leadFreq * 6.8) * t) * Math.exp(-noteOffsetT * 80) * 0.35
+          : 0;
+
+        // Authentic Jawari non-linear bridge resonance (Phase Modulation)
+        const jawariFactor = 0.40 * Math.exp(-noteProgress * 2.2);
+        const mod = jawariFactor * Math.sin(2 * Math.PI * leadFreq * t);
+
+        const h1 = Math.sin(2 * Math.PI * leadFreq * t + mod);
+        const h2 = Math.sin(2 * Math.PI * leadFreq * 2 * t + mod * 0.7) * 0.65;
+        const h3 = Math.sin(2 * Math.PI * leadFreq * 3 * t + mod * 0.45) * 0.42;
+        const h4 = Math.sin(2 * Math.PI * leadFreq * 4 * t) * 0.25;
+        const h5 = Math.sin(2 * Math.PI * leadFreq * 5 * t) * 0.14;
+        const h6 = Math.sin(2 * Math.PI * leadFreq * 6 * t) * 0.08;
+
+        const sitarString = (h1 + h2 + h3 + h4 + h5 + h6 + pluck) * stringDecay * attack * 0.26;
+
+        // Taraf (Sympathetic resonance strings ringing in sympathy)
+        const taraf1 = Math.sin(2 * Math.PI * 261.63 * t) * 0.035;
+        const taraf2 = Math.sin(2 * Math.PI * 392.00 * t) * 0.030;
+        const taraf3 = Math.sin(2 * Math.PI * 329.63 * t) * 0.025;
+        const taraf4 = Math.sin(2 * Math.PI * 523.25 * t) * 0.020;
+        const tarafChorus = (taraf1 + taraf2 + taraf3 + taraf4) * (0.6 + 0.4 * Math.sin(2 * Math.PI * 0.25 * t));
+
+        // Chikari Rhythmic Strum on accents
+        let chikari = 0;
+        if (currentNote.hasChikari && noteOffsetT < 0.4) {
+          const cEnv = Math.exp(-noteOffsetT * 12);
+          chikari = (Math.sin(2 * Math.PI * 523.25 * t) * 0.6 + Math.sin(2 * Math.PI * 784.00 * t) * 0.35) * cEnv * 0.16;
+        }
+
+        lead = sitarString + tarafChorus + chikari;
+      } else if (isShehnai) {
+        // Shehnai
+        const noteDuration = 1.2;
+        const melodicStep = (Math.floor(t / noteDuration) * 3) % notesShehnai.length;
+        const leadFreq = notesShehnai[melodicStep];
+        const notePhase = (t % noteDuration) / noteDuration;
+        const env = notePhase < 0.15 ? notePhase / 0.15 : Math.max(0, 1 - (notePhase - 0.15) * 0.7);
         const h1 = Math.sin(2 * Math.PI * leadFreq * t);
         const h2 = Math.sin(2 * Math.PI * leadFreq * 2 * t) * 0.55;
         const h3 = Math.sin(2 * Math.PI * leadFreq * 3 * t) * 0.4;
-        const h4 = Math.sin(2 * Math.PI * leadFreq * 4 * t) * 0.25;
-        const h5 = Math.sin(2 * Math.PI * leadFreq * 5 * t) * 0.15;
-        lead = (h1 + h2 + h3 + h4 + h5) * 0.18 * envelope;
-      } else if (trackId === 'rajasthani-sitar') {
-        // Sitar (jawari buzzing bridge harmonics)
-        const sitarDecay = Math.exp(-notePhase * 3.5);
-        const h1 = Math.sin(2 * Math.PI * leadFreq * t);
-        const h2 = Math.sin(2 * Math.PI * leadFreq * 2 * t) * 0.7;
-        const h3 = Math.sin(2 * Math.PI * leadFreq * 4 * t) * 0.4;
-        const buzz = (Math.random() - 0.5) * 0.05 * sitarDecay;
-        lead = (h1 + h2 + h3 + buzz) * 0.22 * sitarDecay;
+        lead = (h1 + h2 + h3) * 0.20 * env;
       } else {
-        // Bansuri flute (warm fundamental + breath shimmer)
+        // Bansuri flute
+        const noteDuration = 0.8;
+        const melodicStep = Math.floor(t / noteDuration) % notesFlute.length;
+        const leadFreq = notesFlute[melodicStep];
+        const notePhase = (t % noteDuration) / noteDuration;
+        const env = notePhase < 0.1 ? notePhase / 0.1 : Math.max(0, 1 - (notePhase - 0.1) * 0.6);
         const h1 = Math.sin(2 * Math.PI * leadFreq * t);
         const h2 = Math.sin(2 * Math.PI * leadFreq * 2 * t) * 0.25;
-        const breath = (Math.random() - 0.5) * 0.04;
-        lead = (h1 + h2 + breath) * 0.24 * envelope;
+        lead = (h1 + h2) * 0.22 * env;
       }
 
-      // 3. Temple bells / Ghunghroo chimes on accent beats (every 2.4s)
-      const bellBeat = (t % 2.4);
+      // 3. Auspicious Temple Bells / Manjira Chimes (every 4.8s cycle)
+      const bellBeat = t % 4.8;
       let bell = 0;
-      if (bellBeat < 0.8) {
-        const bellEnv = Math.exp(-bellBeat * 4);
+      if (bellBeat < 1.0) {
+        const bellEnv = Math.exp(-bellBeat * 3.8);
         bell = (Math.sin(2 * Math.PI * 1864 * t) + Math.sin(2 * Math.PI * 2795 * t) * 0.6) * 0.04 * bellEnv;
       }
 
-      // Combine channels with stereo panning
-      const panL = 0.5 + 0.2 * Math.sin(t * 0.5);
+      // 4. Stereo Panning & Natural Room Spatialization
+      const panL = 0.52 + 0.18 * Math.sin(t * 0.4);
       const panR = 1.0 - panL;
 
-      const mixed = (drone + lead + bell) * 0.85;
+      const mixed = (drone + lead + bell) * 0.88;
 
       left[i] = mixed * panL;
       right[i] = mixed * panR;
@@ -184,13 +322,51 @@ class AudioService {
    * Start preview audio in browser
    */
   /**
+   * Loads an AudioBuffer from cache, public URL or synthesized procedural Indian melody
+   */
+  async getTrackBuffer(ctx: BaseAudioContext, trackId: string, durationSeconds: number = 90): Promise<AudioBuffer> {
+    if (trackId === 'custom' && this.customAudioBuffer) {
+      return this.customAudioBuffer;
+    }
+
+    // Default to 'wedding-shubh-vivah' if trackId is empty or not found
+    const targetId = trackId || 'wedding-shubh-vivah';
+    const track = WEDDING_AUDIO_TRACKS.find((t) => t.id === targetId) || WEDDING_AUDIO_TRACKS[0];
+
+    if (track?.url) {
+      if (this.audioBufferCache.has(track.url)) {
+        return this.audioBufferCache.get(track.url)!;
+      }
+      try {
+        const resp = await fetch(track.url);
+        if (resp.ok) {
+          const ab = await resp.arrayBuffer();
+          const audioCtx = this.getContext();
+          const decoded = await audioCtx.decodeAudioData(ab);
+          this.audioBufferCache.set(track.url, decoded);
+          return decoded;
+        }
+      } catch (err) {
+        console.warn(`Could not load audio file ${track.url}, falling back to synthesized sitar:`, err);
+      }
+    }
+
+    return this.createIndianMelodyBuffer(ctx, targetId, durationSeconds);
+  }
+
+  /**
    * Get total duration in seconds of current track
    */
   getTrackDuration(trackId: string): number {
     if (trackId === 'custom' && this.customAudioBuffer) {
       return this.customAudioBuffer.duration;
     }
-    return 90; // Default preset duration
+    const targetId = trackId || 'wedding-shubh-vivah';
+    const track = WEDDING_AUDIO_TRACKS.find((t) => t.id === targetId) || WEDDING_AUDIO_TRACKS[0];
+    if (track?.url && this.audioBufferCache.has(track.url)) {
+      return this.audioBufferCache.get(track.url)!.duration;
+    }
+    return 140; // Default duration
   }
 
   /**
@@ -205,13 +381,7 @@ class AudioService {
     try {
       this.stopPreview();
       const ctx = this.getContext();
-
-      let buffer: AudioBuffer;
-      if (trackId === 'custom' && this.customAudioBuffer) {
-        buffer = this.customAudioBuffer;
-      } else {
-        buffer = this.createIndianMelodyBuffer(ctx, trackId, 120);
-      }
+      const buffer = await this.getTrackBuffer(ctx, trackId, 120);
 
       const source = ctx.createBufferSource();
       source.buffer = buffer;
@@ -270,28 +440,21 @@ class AudioService {
     return this.isPlayingPreview;
   }
 
-
   /**
    * Get an audio stream node connected for MediaRecorder during video export
    * with trim offset, fade-in, and fade-out
    */
-  createExportAudioTrack(
+  async createExportAudioTrack(
     trackId: string,
     volume: number,
     durationSeconds: number,
     startTime: number = 0,
     fadeIn: boolean = true,
     fadeOut: boolean = true
-  ): { destination: MediaStreamAudioDestinationNode; stop: () => void; ctx: AudioContext } {
+  ): Promise<{ destination: MediaStreamAudioDestinationNode; stop: () => void; ctx: AudioContext }> {
     const ctx = this.getContext();
     const destination = ctx.createMediaStreamDestination();
-
-    let buffer: AudioBuffer;
-    if (trackId === 'custom' && this.customAudioBuffer) {
-      buffer = this.customAudioBuffer;
-    } else {
-      buffer = this.createIndianMelodyBuffer(ctx, trackId, startTime + durationSeconds + 5);
-    }
+    const buffer = await this.getTrackBuffer(ctx, trackId, startTime + durationSeconds + 5);
 
     const source = ctx.createBufferSource();
     source.buffer = buffer;

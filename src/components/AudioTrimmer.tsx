@@ -105,7 +105,7 @@ export const AudioTrimmer: React.FC<AudioTrimmerProps> = ({
             <span style={{ fontSize: '0.78rem', color: '#9CA3AF' }}>Choose Auspicious Instrumental Theme:</span>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 8 }}>
               {WEDDING_AUDIO_TRACKS.map((t) => {
-                const isSelected = audio.trackId === t.id;
+                const isSelected = audio.trackId === t.id || (!audio.trackId && t.id === 'wedding-shubh-vivah');
                 return (
                   <button
                     key={t.id}

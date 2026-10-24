@@ -448,7 +448,7 @@ export const createDefaultProject = (id: string = 'proj_' + Date.now()): Wedding
     templateId: 'divine-temple',
     audio: {
       enabled: true,
-      trackId: 'mangal-shehnai',
+      trackId: 'wedding-shubh-vivah',
       volume: 0.85,
       startTime: 0,
       fadeIn: true,

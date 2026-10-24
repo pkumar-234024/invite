@@ -72,6 +72,7 @@ export type TemplateId =
   | 'sampoorna-kashi'
   | 'divine-temple'
   | 'sampoorna-hindi'
+  | 'sampoorna-sarvajan'
   | 'royal-cream-palace'
   | 'royal-maharaja'
   | 'shubh-vivah'
@@ -102,7 +103,7 @@ export interface TemplateDefinition {
 
 export interface AudioSettings {
   enabled: boolean;
-  trackId: string; // 'mangal-shehnai' | 'rajasthani-sitar' | 'jashn-shaadi' | 'custom'
+  trackId: string; // 'royal-sitar' | 'mangal-shehnai' | 'rajasthani-sitar' | 'jashn-shaadi' | 'custom'
   volume: number; // 0 to 1
   customTrackName?: string;
   customAudioBlobKey?: string;
