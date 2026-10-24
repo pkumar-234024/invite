@@ -1,0 +1,340 @@
+/* =========================================================================
+   ShaadiMotion — Indian Wedding Invitation Video Maker
+   Design System & Global Styling
+   ========================================================================= */
+
+:root {
+  /* Royal Indian Wedding Color Palette */
+  --royal-maroon: #5A0819;
+  --royal-maroon-dark: #38030D;
+  --royal-maroon-light: #7E1026;
+  --deep-crimson: #8B0000;
+  --gold-primary: #D4AF37;
+  --gold-light: #FFE494;
+  --gold-warm: #E5C158;
+  --gold-dark: #997A15;
+  --ivory-white: #FFFDF9;
+  --cream-soft: #FAF4E8;
+  --champagne: #F5E6D3;
+  --emerald-green: #0F5257;
+  --rose-pink: #E8A598;
+  --dark-noir: #0E0D11;
+  --dark-card: #17151D;
+  --dark-border: rgba(212, 175, 55, 0.25);
+
+  /* Gradients */
+  --grad-royal-maroon: linear-gradient(135deg, #4A0311 0%, #700E23 50%, #2A0108 100%);
+  --grad-gold: linear-gradient(135deg, #FFE89E 0%, #D4AF37 50%, #9E7D17 100%);
+  --grad-gold-subtle: linear-gradient(135deg, rgba(255, 232, 158, 0.15) 0%, rgba(212, 175, 55, 0.05) 100%);
+  --grad-card-dark: linear-gradient(180deg, #1E1B24 0%, #141218 100%);
+
+  /* Typography */
+  --font-serif: 'Cinzel', serif;
+  --font-decorative: 'Cinzel Decorative', serif;
+  --font-hindi: 'Noto Serif Devanagari', 'Rozha One', serif;
+  --font-cursive: 'Great Vibes', cursive;
+  --font-sans: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-playfair: 'Playfair Display', serif;
+  --font-cormorant: 'Cormorant Garamond', serif;
+
+  /* Shadows & Glows */
+  --shadow-gold-sm: 0 2px 10px rgba(212, 175, 55, 0.2);
+  --shadow-gold-md: 0 4px 25px rgba(212, 175, 55, 0.35);
+  --shadow-gold-lg: 0 10px 40px rgba(212, 175, 55, 0.45);
+  --shadow-card: 0 8px 30px rgba(0, 0, 0, 0.6);
+  --glow-gold-text: 0 0 15px rgba(255, 228, 148, 0.5);
+
+  /* Transitions */
+  --transition-fast: 0.15s ease;
+  --transition-normal: 0.25s ease-out;
+  --transition-smooth: 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Base Reset & Setup */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  background-color: var(--dark-noir);
+  color: #F5EFEB;
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 1.6;
+  min-height: 100vh;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 100vw;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background-color: var(--dark-noir);
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #110F15;
+}
+::-webkit-scrollbar-thumb {
+  background: #4A3A1A;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--gold-primary);
+}
+
+/* Typography Helpers */
+h1, h2, h3, h4, .font-heading {
+  font-family: var(--font-serif);
+  color: #FFFDF8;
+  line-height: 1.25;
+}
+
+.font-decorative {
+  font-family: var(--font-decorative);
+}
+
+.font-hindi {
+  font-family: var(--font-hindi);
+}
+
+.font-cursive {
+  font-family: var(--font-cursive);
+}
+
+.font-cormorant {
+  font-family: var(--font-cormorant);
+}
+
+/* Gold Text Gradient */
+.gold-gradient-text {
+  background: var(--grad-gold);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  display: inline-block;
+}
+
+.gold-glow {
+  text-shadow: var(--glow-gold-text);
+}
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 22px;
+  border-radius: 8px;
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: 0.95rem;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  border: 1px solid transparent;
+  text-decoration: none;
+  user-select: none;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.btn-gold {
+  background: var(--grad-gold);
+  color: #2D050D;
+  box-shadow: var(--shadow-gold-sm);
+  border: 1px solid #FFE494;
+}
+
+.btn-gold:hover {
+  box-shadow: var(--shadow-gold-md);
+  transform: translateY(-2px);
+  filter: brightness(1.08);
+}
+
+.btn-maroon {
+  background: var(--grad-royal-maroon);
+  color: #FFE494;
+  border: 1px solid var(--gold-primary);
+  box-shadow: 0 4px 15px rgba(90, 8, 25, 0.4);
+}
+
+.btn-maroon:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(90, 8, 25, 0.6);
+  border-color: #FFE494;
+}
+
+.btn-outline-gold {
+  background: rgba(212, 175, 55, 0.08);
+  color: #FFE494;
+  border: 1px solid var(--gold-primary);
+}
+
+.btn-outline-gold:hover {
+  background: rgba(212, 175, 55, 0.2);
+  color: #FFFDF9;
+  border-color: #FFE494;
+  transform: translateY(-2px);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: #E0D5BE;
+  border: 1px solid transparent;
+}
+
+.btn-ghost:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #FFF;
+}
+
+/* Cards & Glassmorphism */
+.glass-card {
+  background: rgba(26, 23, 31, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--dark-border);
+  border-radius: 14px;
+  box-shadow: var(--shadow-card);
+  transition: all var(--transition-normal);
+}
+
+.glass-card-hover:hover {
+  border-color: rgba(212, 175, 55, 0.5);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.7), 0 0 20px rgba(212, 175, 55, 0.2);
+  transform: translateY(-3px);
+}
+
+/* Ornate Traditional Border Elements */
+.ornate-border {
+  position: relative;
+  border: 2px solid var(--gold-primary);
+  padding: 24px;
+}
+
+.ornate-border::before,
+.ornate-border::after {
+  content: '';
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border: 2px solid #FFE494;
+}
+
+.ornate-border::before {
+  top: 4px;
+  left: 4px;
+  border-right: none;
+  border-bottom: none;
+}
+
+.ornate-border::after {
+  bottom: 4px;
+  right: 4px;
+  border-left: none;
+  border-top: none;
+}
+
+/* Animations */
+@keyframes floatGentle {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+@keyframes pulseGold {
+  0%, 100% { opacity: 0.8; filter: drop-shadow(0 0 8px rgba(212, 175, 55, 0.4)); }
+  50% { opacity: 1; filter: drop-shadow(0 0 20px rgba(212, 175, 55, 0.8)); }
+}
+
+@keyframes spinSlow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.anim-float {
+  animation: floatGentle 5s ease-in-out infinite;
+}
+
+.anim-pulse-gold {
+  animation: pulseGold 3s ease-in-out infinite;
+}
+
+.anim-spin-slow {
+  animation: spinSlow 30s linear infinite;
+}
+
+/* Form Controls */
+.form-group {
+  margin-bottom: 18px;
+  text-align: left;
+}
+
+.form-label {
+  display: block;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #FFE494;
+  margin-bottom: 6px;
+  letter-spacing: 0.3px;
+}
+
+.form-input, .form-textarea, .form-select {
+  width: 100%;
+  padding: 10px 14px;
+  background: #121016;
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  border-radius: 8px;
+  color: #FFFDF9;
+  font-family: inherit;
+  font-size: 0.95rem;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.form-input:focus, .form-textarea:focus, .form-select:focus {
+  outline: none;
+  border-color: var(--gold-primary);
+  box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.2);
+}
+
+.form-textarea {
+  min-height: 100px;
+  resize: vertical;
+}
+
+/* Responsive Grid helpers */
+.grid-2 {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+}
+
+.grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+@media (max-width: 900px) {
+  .grid-2, .grid-3 {
+    grid-template-columns: 1fr;
+  }
+}
