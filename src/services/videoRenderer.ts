@@ -3,7 +3,10 @@ import { audioService } from './audioService';
 import { getBrowserCapabilities } from './browserCapabilities';
 import { indexedDBService } from './indexedDBService';
 
-// Import all 10 renderers
+// Import all 13 renderers
+import { renderDivineTemple } from '../templates/renderers/divineTemple';
+import { renderSampoornaHindi } from '../templates/renderers/sampoornaHindi';
+import { renderRoyalCreamPalace } from '../templates/renderers/royalCreamPalace';
 import { renderCinematicWedding } from '../templates/renderers/cinematicWedding';
 import { renderClassicIndian } from '../templates/renderers/classicIndian';
 import { renderFloralDreams } from '../templates/renderers/floralDreams';
@@ -14,6 +17,7 @@ import { renderRoyalMaharaja } from '../templates/renderers/royalMaharaja';
 import { renderRoyalRajasthani } from '../templates/renderers/royalRajasthani';
 import { renderShubhVivah } from '../templates/renderers/shubhVivah';
 import { renderTraditionalIndian } from '../templates/renderers/traditionalIndian';
+import { drawCinematicTransition } from '../templates/renderers/common';
 
 export interface LoadedImages {
   bride?: HTMLImageElement;
@@ -92,6 +96,15 @@ export function renderTemplateFrame(
   const templateId: TemplateId = project.templateId || 'royal-maharaja';
 
   switch (templateId) {
+    case 'divine-temple':
+      renderDivineTemple(ctx, width, height, time, duration, project, images);
+      break;
+    case 'sampoorna-hindi':
+      renderSampoornaHindi(ctx, width, height, time, duration, project, images);
+      break;
+    case 'royal-cream-palace':
+      renderRoyalCreamPalace(ctx, width, height, time, duration, project, images);
+      break;
     case 'royal-maharaja':
       renderRoyalMaharaja(ctx, width, height, time, duration, project, images);
       break;
@@ -123,8 +136,23 @@ export function renderTemplateFrame(
       renderClassicIndian(ctx, width, height, time, duration, project, images);
       break;
     default:
-      renderRoyalMaharaja(ctx, width, height, time, duration, project, images);
+      renderDivineTemple(ctx, width, height, time, duration, project, images);
       break;
+  }
+
+  // Draw cinematic transition between scenes for other templates (Divine Temple has built-in exact 6 scene transitions)
+  if (templateId !== 'divine-temple') {
+    const sceneDuration = duration / 7;
+    const sceneProgress = (time % sceneDuration) / sceneDuration;
+    drawCinematicTransition(
+      ctx,
+      width,
+      height,
+      sceneProgress,
+      project.videoSettings?.transition || 'auto',
+      templateId,
+      time
+    );
   }
 }
 
@@ -197,11 +225,14 @@ export async function generateWeddingVideo(
   const ctx = canvas.getContext('2d', { alpha: false });
   if (!ctx) throw new Error('Canvas 2D context is not available.');
 
-  // Audio track setup
+  // Audio track setup with trimming and fading
   const audioExport = audioService.createExportAudioTrack(
     project.audio.enabled ? project.audio.trackId : 'none',
     project.audio.enabled ? project.audio.volume : 0,
-    duration
+    duration,
+    project.audio.startTime || 0,
+    project.audio.fadeIn ?? true,
+    project.audio.fadeOut ?? true
   );
 
   // Determine recording MIME type

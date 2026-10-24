@@ -11,12 +11,12 @@ interface VideoPreviewProps {
 }
 
 const SCENE_NAMES = [
-  '1. Opening & Invocation',
-  '2. Couple Reveal',
-  '3. Bride & Groom Spotlight',
-  '4. Romantic Union',
-  '5. Sacred Ceremonies',
-  '6. Family Blessing',
+  '1. Temple Awakening',
+  '2. Sacred Invitation',
+  '3. Couple Reveal',
+  '4. Beautiful Moments',
+  '5. Auspicious Date',
+  '6. Venue Celebration',
   '7. Grand Finale',
 ];
 
@@ -33,7 +33,7 @@ export const VideoPreview: React.FC<VideoPreviewProps> = ({
   const [volume, setVolume] = useState<number>(project.audio.volume || 0.85);
   const [isMuted, setIsMuted] = useState<boolean>(!project.audio.enabled);
 
-  const duration = project.videoSettings?.durationSeconds || 35;
+  const duration = project.videoSettings?.durationSeconds || 45;
   const sceneDuration = duration / 7;
   const currentSceneIndex = Math.min(6, Math.floor(currentTime / sceneDuration));
 
@@ -50,17 +50,22 @@ export const VideoPreview: React.FC<VideoPreviewProps> = ({
     };
   }, [project.photos]);
 
-  // Audio preview playback sync
+  // Audio preview playback sync with trimming support
   useEffect(() => {
     if (isPlaying && !isMuted && project.audio.enabled) {
-      audioService.startPreview(project.audio.trackId, volume);
+      audioService.startPreview(
+        project.audio.trackId,
+        volume,
+        project.audio.startTime || 0,
+        project.audio.fadeIn
+      );
     } else {
       audioService.stopPreview();
     }
     return () => {
       audioService.stopPreview();
     };
-  }, [isPlaying, isMuted, project.audio.trackId, project.audio.enabled]);
+  }, [isPlaying, isMuted, project.audio.trackId, project.audio.enabled, project.audio.startTime, project.audio.fadeIn]);
 
   useEffect(() => {
     audioService.setPreviewVolume(isMuted ? 0 : volume);

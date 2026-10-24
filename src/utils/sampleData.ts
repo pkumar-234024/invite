@@ -383,6 +383,49 @@ export const DEFAULT_COUPLE: CoupleDetails = {
   groomParents: 'Mr. Mahendra & Mrs. Rekha Sharma',
 };
 
+export const PHOTO_STYLE_PRESETS = [
+  {
+    id: 'regal-maroon',
+    title: 'Royal Regal Maroon',
+    hindiTitle: 'शाही मारूड़ी',
+    bride: SAMPLE_BRIDE_PHOTO,
+    groom: SAMPLE_GROOM_PHOTO,
+    couple: SAMPLE_COUPLE_PHOTO,
+    filter: 'royal-gold' as const,
+    frameShape: 'royal-arch' as const,
+  },
+  {
+    id: 'kundan-heritage',
+    title: 'Kundan Heritage Gold',
+    hindiTitle: 'कुंदन हेरिटेज',
+    bride: SAMPLE_BRIDE_PHOTO,
+    groom: SAMPLE_GROOM_PHOTO,
+    couple: SAMPLE_COUPLE_PHOTO,
+    filter: 'vintage-sepia' as const,
+    frameShape: 'oval-kundan' as const,
+  },
+  {
+    id: 'festive-vibrant',
+    title: 'Festive Vivah Celebration',
+    hindiTitle: 'उत्सव विवाह',
+    bride: SAMPLE_BRIDE_PHOTO,
+    groom: SAMPLE_GROOM_PHOTO,
+    couple: SAMPLE_COUPLE_PHOTO,
+    filter: 'festive-vibrant' as const,
+    frameShape: 'floral-wreath' as const,
+  },
+  {
+    id: 'romantic-pastel',
+    title: 'Romantic Soft Dream',
+    hindiTitle: 'गुलाबी प्रेम',
+    bride: SAMPLE_BRIDE_PHOTO,
+    groom: SAMPLE_GROOM_PHOTO,
+    couple: SAMPLE_COUPLE_PHOTO,
+    filter: 'romantic-soft' as const,
+    frameShape: 'modern-card' as const,
+  },
+];
+
 export const createDefaultProject = (id: string = 'proj_' + Date.now()): WeddingProject => {
   return {
     id,
@@ -397,24 +440,28 @@ export const createDefaultProject = (id: string = 'proj_' + Date.now()): Wedding
       groomPhoto: SAMPLE_GROOM_PHOTO,
       couplePhoto: SAMPLE_COUPLE_PHOTO,
       offsets: {
-        bride: { zoom: 1, offsetX: 0, offsetY: 0 },
-        groom: { zoom: 1, offsetX: 0, offsetY: 0 },
-        couple: { zoom: 1, offsetX: 0, offsetY: 0 },
+        bride: { zoom: 1, offsetX: 0, offsetY: 0, rotation: 0, filter: 'none', frameShape: 'default' },
+        groom: { zoom: 1, offsetX: 0, offsetY: 0, rotation: 0, filter: 'none', frameShape: 'default' },
+        couple: { zoom: 1, offsetX: 0, offsetY: 0, rotation: 0, filter: 'none', frameShape: 'default' },
       },
     },
-    templateId: 'royal-maharaja',
+    templateId: 'divine-temple',
     audio: {
       enabled: true,
       trackId: 'mangal-shehnai',
       volume: 0.85,
+      startTime: 0,
+      fadeIn: true,
+      fadeOut: true,
     },
     videoSettings: {
       resolution: '1080p',
       width: 1920,
       height: 1080,
       fps: 30,
-      durationSeconds: 35,
+      durationSeconds: 45,
       format: 'mp4',
+      transition: 'auto',
     },
   };
 };

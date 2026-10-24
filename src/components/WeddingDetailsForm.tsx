@@ -3,7 +3,7 @@ import { Heart, Calendar, MessageSquare, Camera, ArrowRight, ArrowLeft, Check, S
 import type { Ceremony, CoupleDetails, InvitationMessage, LanguageOption, PhotoOffsets, WeddingProject } from '../types/wedding';
 import { CeremonyManager } from './CeremonyManager';
 import { PhotoUploader } from './PhotoUploader';
-import { INVITATION_MESSAGE_PRESETS } from '../utils/sampleData';
+import { INVITATION_MESSAGE_PRESETS, PHOTO_STYLE_PRESETS } from '../utils/sampleData';
 
 interface WeddingDetailsFormProps {
   project: WeddingProject;
@@ -414,9 +414,50 @@ export const WeddingDetailsForm: React.FC<WeddingDetailsFormProps> = ({
             <Camera size={22} color="#D4AF37" />
             <h3 style={{ fontSize: '1.3rem' }}>Step 4: Couple Photo Uploads</h3>
           </div>
-          <p style={{ color: '#9CA3AF', fontSize: '0.88rem', marginBottom: 20 }}>
-            Upload high-resolution photos for the bride, groom, and couple. Photos are stored safely on your device in IndexedDB. Use the zoom and pan controls to adjust position without distorting facial proportions.
+          <p style={{ color: '#9CA3AF', fontSize: '0.88rem', marginBottom: 16 }}>
+            Upload high-resolution photos for the bride, groom, and couple. Photos are stored safely on your device in IndexedDB. Use the zoom, pan, frame shape, color grading filter, and rotation controls to create professional portraits.
           </p>
+
+          {/* Quick Curated Photo Style Presets */}
+          <div style={{
+            background: 'rgba(0,0,0,0.3)',
+            padding: 14,
+            borderRadius: 10,
+            border: '1px solid rgba(212, 175, 55, 0.25)',
+            marginBottom: 20,
+          }}>
+            <div style={{ fontSize: '0.82rem', fontWeight: 600, color: '#FFE494', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
+              <Sparkles size={14} color="#FFE494" /> 1-Click Curated Portrait Styles:
+            </div>
+            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+              {PHOTO_STYLE_PRESETS.map((preset) => (
+                <button
+                  key={preset.id}
+                  type="button"
+                  onClick={() => {
+                    onUpdateProject((prev) => ({
+                      ...prev,
+                      photos: {
+                        ...prev.photos,
+                        bridePhoto: preset.bride,
+                        groomPhoto: preset.groom,
+                        couplePhoto: preset.couple,
+                        offsets: {
+                          bride: { zoom: 1, offsetX: 0, offsetY: 0, rotation: 0, filter: preset.filter, frameShape: preset.frameShape },
+                          groom: { zoom: 1, offsetX: 0, offsetY: 0, rotation: 0, filter: preset.filter, frameShape: preset.frameShape },
+                          couple: { zoom: 1, offsetX: 0, offsetY: 0, rotation: 0, filter: preset.filter, frameShape: preset.frameShape },
+                        },
+                      },
+                    }));
+                  }}
+                  className="btn btn-outline-gold"
+                  style={{ padding: '6px 14px', fontSize: '0.8rem' }}
+                >
+                  {preset.title} ({preset.hindiTitle})
+                </button>
+              ))}
+            </div>
+          </div>
 
           <div className="grid-2">
             <PhotoUploader

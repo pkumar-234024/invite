@@ -183,7 +183,25 @@ class AudioService {
   /**
    * Start preview audio in browser
    */
-  async startPreview(trackId: string, volume: number = 0.8): Promise<void> {
+  /**
+   * Get total duration in seconds of current track
+   */
+  getTrackDuration(trackId: string): number {
+    if (trackId === 'custom' && this.customAudioBuffer) {
+      return this.customAudioBuffer.duration;
+    }
+    return 90; // Default preset duration
+  }
+
+  /**
+   * Start preview audio in browser with trim offset and optional fade-in
+   */
+  async startPreview(
+    trackId: string,
+    volume: number = 0.8,
+    startTime: number = 0,
+    fadeIn: boolean = true
+  ): Promise<void> {
     try {
       this.stopPreview();
       const ctx = this.getContext();
@@ -192,7 +210,7 @@ class AudioService {
       if (trackId === 'custom' && this.customAudioBuffer) {
         buffer = this.customAudioBuffer;
       } else {
-        buffer = this.createIndianMelodyBuffer(ctx, trackId, 90);
+        buffer = this.createIndianMelodyBuffer(ctx, trackId, 120);
       }
 
       const source = ctx.createBufferSource();
@@ -200,12 +218,21 @@ class AudioService {
       source.loop = true;
 
       const gain = ctx.createGain();
-      gain.gain.setValueAtTime(volume, ctx.currentTime);
+      const targetVol = Math.max(0.001, Math.min(1, volume));
+
+      if (fadeIn) {
+        gain.gain.setValueAtTime(0.001, ctx.currentTime);
+        gain.gain.linearRampToValueAtTime(targetVol, ctx.currentTime + 1.5);
+      } else {
+        gain.gain.setValueAtTime(targetVol, ctx.currentTime);
+      }
 
       source.connect(gain);
       gain.connect(ctx.destination);
 
-      source.start();
+      const offset = Math.max(0, Math.min(startTime, Math.max(0, buffer.duration - 5)));
+      source.start(ctx.currentTime, offset);
+
       this.previewSource = source;
       this.previewGain = gain;
       this.isPlayingPreview = true;
@@ -243,13 +270,18 @@ class AudioService {
     return this.isPlayingPreview;
   }
 
+
   /**
    * Get an audio stream node connected for MediaRecorder during video export
+   * with trim offset, fade-in, and fade-out
    */
   createExportAudioTrack(
     trackId: string,
     volume: number,
-    durationSeconds: number
+    durationSeconds: number,
+    startTime: number = 0,
+    fadeIn: boolean = true,
+    fadeOut: boolean = true
   ): { destination: MediaStreamAudioDestinationNode; stop: () => void; ctx: AudioContext } {
     const ctx = this.getContext();
     const destination = ctx.createMediaStreamDestination();
@@ -258,23 +290,32 @@ class AudioService {
     if (trackId === 'custom' && this.customAudioBuffer) {
       buffer = this.customAudioBuffer;
     } else {
-      buffer = this.createIndianMelodyBuffer(ctx, trackId, durationSeconds + 3);
+      buffer = this.createIndianMelodyBuffer(ctx, trackId, startTime + durationSeconds + 5);
     }
 
     const source = ctx.createBufferSource();
     source.buffer = buffer;
 
     const gain = ctx.createGain();
-    gain.gain.setValueAtTime(volume, ctx.currentTime);
+    const targetVol = Math.max(0.001, Math.min(1, volume));
 
-    // Fade out at end
-    gain.gain.setValueAtTime(volume, ctx.currentTime + Math.max(0, durationSeconds - 2));
-    gain.gain.linearRampToValueAtTime(0.001, ctx.currentTime + durationSeconds);
+    if (fadeIn) {
+      gain.gain.setValueAtTime(0.001, ctx.currentTime);
+      gain.gain.linearRampToValueAtTime(targetVol, ctx.currentTime + 1.5);
+    } else {
+      gain.gain.setValueAtTime(targetVol, ctx.currentTime);
+    }
+
+    if (fadeOut && durationSeconds > 3) {
+      gain.gain.setValueAtTime(targetVol, ctx.currentTime + durationSeconds - 2.5);
+      gain.gain.linearRampToValueAtTime(0.001, ctx.currentTime + durationSeconds);
+    }
 
     source.connect(gain);
     gain.connect(destination);
 
-    source.start();
+    const offset = Math.max(0, Math.min(startTime, Math.max(0, buffer.duration - 2)));
+    source.start(ctx.currentTime, offset, durationSeconds + 0.5);
 
     return {
       destination,

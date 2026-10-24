@@ -33,10 +33,17 @@ export interface InvitationMessage {
   quote?: string;
 }
 
+export type PhotoFilter = 'none' | 'royal-gold' | 'festive-vibrant' | 'vintage-sepia' | 'romantic-soft';
+
+export type PhotoFrameShape = 'default' | 'royal-arch' | 'oval-kundan' | 'heritage-square' | 'floral-wreath' | 'modern-card';
+
 export interface PhotoOffsets {
-  zoom: number; // 1 to 2
-  offsetX: number; // -100 to 100 percentage
-  offsetY: number; // -100 to 100 percentage
+  zoom: number; // 1 to 2.5
+  offsetX: number; // -50 to 50 percentage
+  offsetY: number; // -50 to 50 percentage
+  rotation?: number; // 0, 90, 180, 270
+  filter?: PhotoFilter;
+  frameShape?: PhotoFrameShape;
 }
 
 export interface ProjectPhotos {
@@ -53,7 +60,18 @@ export interface ProjectPhotos {
   };
 }
 
+export type TransitionType =
+  | 'auto'
+  | 'gold-stardust'
+  | 'light-leak'
+  | 'royal-curtain'
+  | 'mandala-bloom'
+  | 'zoom-push';
+
 export type TemplateId =
+  | 'divine-temple'
+  | 'sampoorna-hindi'
+  | 'royal-cream-palace'
   | 'royal-maharaja'
   | 'shubh-vivah'
   | 'royal-rajasthani'
@@ -87,6 +105,10 @@ export interface AudioSettings {
   volume: number; // 0 to 1
   customTrackName?: string;
   customAudioBlobKey?: string;
+  startTime: number; // in seconds (trim start)
+  endTime?: number; // in seconds
+  fadeIn: boolean;
+  fadeOut: boolean;
 }
 
 export interface VideoExportSettings {
@@ -96,6 +118,7 @@ export interface VideoExportSettings {
   fps: number;
   durationSeconds: number;
   format: 'mp4' | 'webm';
+  transition: TransitionType;
 }
 
 export interface WeddingProject {
