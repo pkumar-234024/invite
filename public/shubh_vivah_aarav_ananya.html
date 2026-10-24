@@ -1,0 +1,1529 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>शुभ विवाह निमंत्रण — आयुष्मान आरव एवं आयुष्मती अनन्या</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@1,600;1,700&family=Noto+Sans+Devanagari:wght@400;600;700;800&family=Rozha+One&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      background: #03140D;
+      color: #FFF8E7;
+      font-family: 'Noto Sans Devanagari', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      overflow-x: hidden;
+    }
+    .video-wrapper {
+      position: relative;
+      width: 100%;
+      max-width: 1120px;
+      aspect-ratio: 16 / 9;
+      background: #000;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.9), 0 0 30px rgba(212, 175, 55, 0.25);
+      border: 2px solid rgba(212, 175, 55, 0.6);
+    }
+    canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: contain;
+    }
+    .controls-bar {
+      margin-top: 14px;
+      width: 100%;
+      max-width: 1120px;
+      background: rgba(11, 45, 29, 0.9);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(212, 175, 55, 0.4);
+      border-radius: 14px;
+      padding: 12px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+    }
+    .timeline-container {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .scrubber {
+      flex: 1;
+      height: 7px;
+      -webkit-appearance: none;
+      appearance: none;
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 4px;
+      outline: none;
+      cursor: pointer;
+    }
+    .scrubber::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: #FFD700;
+      cursor: pointer;
+      box-shadow: 0 0 8px #FFD700;
+    }
+    .time-display {
+      font-family: monospace;
+      font-size: 0.88rem;
+      color: #F5E6A8;
+      min-width: 80px;
+      text-align: right;
+    }
+    .buttons-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .btn-group-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .btn {
+      background: none;
+      border: 1px solid rgba(212, 175, 55, 0.5);
+      color: #FFF8E7;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn:hover {
+      background: rgba(212, 175, 55, 0.2);
+      border-color: #FFD700;
+      transform: translateY(-1px);
+    }
+    .btn-primary-gold {
+      background: linear-gradient(135deg, #FFD700 0%, #D4AF37 50%, #AA820A 100%);
+      color: #120305;
+      border: none;
+      font-weight: 700;
+      box-shadow: 0 0 16px rgba(212, 175, 55, 0.4);
+    }
+    .btn-primary-gold:hover {
+      background: linear-gradient(135deg, #FFE494 0%, #FFD700 50%, #C49715 100%);
+      box-shadow: 0 0 24px rgba(212, 175, 55, 0.7);
+    }
+    .scene-pills {
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      padding: 4px 0;
+      scrollbar-width: none;
+    }
+    .scene-pill {
+      font-size: 0.76rem;
+      padding: 5px 10px;
+      border-radius: 6px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(212, 175, 55, 0.25);
+      color: #F5E6A8;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.15s ease;
+    }
+    .scene-pill:hover, .scene-pill.active {
+      background: rgba(212, 175, 55, 0.25);
+      border-color: #FFD700;
+      color: #FFF;
+    }
+    .status-toast {
+      font-size: 0.82rem;
+      color: #F5E6A8;
+      font-style: italic;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="video-wrapper" id="videoWrapper">
+    <canvas id="canvas" width="1920" height="1080"></canvas>
+  </div>
+
+  <div class="controls-bar">
+    <!-- Timeline Scrubber -->
+    <div class="timeline-container">
+      <input type="range" class="scrubber" id="scrubber" min="0" max="40" step="0.05" value="0">
+      <div class="time-display" id="timeDisplay">00:00 / 00:40</div>
+    </div>
+
+    <!-- Scene Jump Quick Nav -->
+    <div class="scene-pills" id="scenePills">
+      <button class="scene-pill active" onclick="jumpTo(0.05)">1. गणेश वंदना (0s)</button>
+      <button class="scene-pill" onclick="jumpTo(6.05)">2. सस्नेह निमंत्रण (6s)</button>
+      <button class="scene-pill" onclick="jumpTo(12.05)">3. परिणय परिचय (12s)</button>
+      <button class="scene-pill" onclick="jumpTo(18.05)">4. युगल दर्शन (18s)</button>
+      <button class="scene-pill" onclick="jumpTo(24.05)">5. शुभ लग्न मुहूर्त (24s)</button>
+      <button class="scene-pill" onclick="jumpTo(32.05)">6. परिणय स्थल (32s)</button>
+      <button class="scene-pill" onclick="jumpTo(37.05)">7. आशीर्वचन (37s)</button>
+    </div>
+
+    <!-- Actions Row -->
+    <div class="buttons-row">
+      <div class="btn-group-left">
+        <button class="btn" id="playBtn" onclick="togglePlay()">▶ Play Video</button>
+        <button class="btn" onclick="jumpTo(0.05)">↺ Replay</button>
+        <button class="btn" id="audioToggleBtn" onclick="toggleAudio()">🔊 Audio: ON</button>
+        <button class="btn" onclick="toggleFullscreen()">⛶ Fullscreen</button>
+      </div>
+
+      <div class="btn-group-right">
+        <button class="btn btn-primary-gold" id="exportBtn" onclick="exportToMP4()">
+          ⬇ Export MP4 Video (1080p, 40s)
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ==========================================
+    // 0. SPECIFICATIONS & CONSTANTS
+    // ==========================================
+    const DURATION = 40.0;
+    const FPS = 30;
+    const WIDTH = 1920;
+    const HEIGHT = 1080;
+
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d', { alpha: false });
+    const scrubber = document.getElementById('scrubber');
+    const timeDisplay = document.getElementById('timeDisplay');
+    const playBtn = document.getElementById('playBtn');
+    const exportBtn = document.getElementById('exportBtn');
+    const audioToggleBtn = document.getElementById('audioToggleBtn');
+
+    let currentTime = 0;
+    let isPlaying = true;
+    let audioEnabled = true;
+    let audioCtx = null;
+    let audioSource = null;
+    let audioGain = null;
+    let audioBuffer = null;
+
+    // ==========================================
+    // 1. EMBEDDED SAMPLE COUPLE PHOTO (SVG Data URL)
+    // ==========================================
+    const coupleImage = new Image();
+    coupleImage.src = `data:image/svg+xml;utf8,${encodeURIComponent(`
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 650" width="1000" height="650">
+        <defs>
+          <radialGradient id="aurora" cx="50%" cy="40%" r="60%">
+            <stop offset="0%" stop-color="#FFD700" stop-opacity="0.35" />
+            <stop offset="60%" stop-color="#0B5D3B" stop-opacity="0.8" />
+            <stop offset="100%" stop-color="#04261A" />
+          </radialGradient>
+          <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#FFE494" />
+            <stop offset="50%" stop-color="#D4AF37" />
+            <stop offset="100%" stop-color="#997A15" />
+          </linearGradient>
+          <linearGradient id="lehenga" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#A51226" />
+            <stop offset="100%" stop-color="#5B0512" />
+          </linearGradient>
+          <linearGradient id="sherwani" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#FDF8EE" />
+            <stop offset="100%" stop-color="#E1D0B3" />
+          </linearGradient>
+        </defs>
+        <rect width="1000" height="650" fill="url(#aurora)" />
+        <circle cx="500" cy="270" r="230" fill="none" stroke="url(#gold)" stroke-width="3" stroke-dasharray="10,6" />
+        
+        <!-- Groom (Left) -->
+        <path d="M 270,440 L 410,440 L 430,650 L 250,650 Z" fill="url(#sherwani)" />
+        <path d="M 340,440 L 340,650" stroke="url(#gold)" stroke-width="4" />
+        <!-- Groom Pagdi / Turban -->
+        <ellipse cx="340" cy="285" rx="55" ry="65" fill="#C49A45" />
+        <path d="M 290,265 C 310,215 370,215 390,265 Z" fill="#800020" />
+        <circle cx="340" cy="235" r="8" fill="url(#gold)" />
+        <ellipse cx="340" cy="305" rx="38" ry="46" fill="#F4D3B0" />
+
+        <!-- Bride (Right) -->
+        <path d="M 590,440 L 730,440 L 750,650 L 570,650 Z" fill="url(#lehenga)" />
+        <path d="M 590,450 Q 660,540 730,450" fill="none" stroke="url(#gold)" stroke-width="6" />
+        <!-- Bridal Dupatta & Maang Tikka -->
+        <path d="M 600,260 C 620,200 700,200 720,260 C 740,360 720,440 600,440 Z" fill="#8B0000" stroke="url(#gold)" stroke-width="3" />
+        <ellipse cx="660" cy="305" rx="36" ry="44" fill="#FCE1C6" />
+        <circle cx="660" cy="275" r="5" fill="url(#gold)" />
+        <circle cx="660" cy="295" r="3" fill="#8B0000" /> <!-- Bindi -->
+
+        <!-- Royal Varmala (Garlands) -->
+        <path d="M 330,370 Q 360,490 390,370" fill="none" stroke="#FF8C00" stroke-width="8" stroke-linecap="round" />
+        <path d="M 610,370 Q 640,490 670,370" fill="none" stroke="#E83050" stroke-width="8" stroke-linecap="round" />
+
+        <text x="500" y="590" text-anchor="middle" font-family="'Noto Sans Devanagari', serif" font-size="34" font-weight="700" fill="#FFEAA7">॥ सदा सौभाग्यवती भव ॥</text>
+      </svg>
+    `)}`;
+
+    // ==========================================
+    // 2. PARTICLES & FLOATING LOTUS PETALS
+    // ==========================================
+    const PETALS = [];
+    for (let i = 0; i < 12; i++) {
+      PETALS.push({
+        x: Math.random(),
+        y: Math.random(),
+        size: 8 + Math.random() * 8,
+        speedY: 0.04 + Math.random() * 0.04,
+        rotSpeed: 0.6 + Math.random() * 0.8,
+        phase: Math.random() * Math.PI * 2,
+        isPink: i % 3 !== 0,
+      });
+    }
+
+    const PARTICLES = [];
+    for (let i = 0; i < 45; i++) {
+      PARTICLES.push({
+        x: Math.random(),
+        y: Math.random(),
+        size: 1.5 + Math.random() * 3,
+        speedY: 0.05 + Math.random() * 0.06,
+        phase: Math.random() * Math.PI * 2,
+      });
+    }
+
+    // ==========================================
+    // 3. SOUND SYNTHESIZER (Classical Sitar & Tanpura)
+    // ==========================================
+    function initAudio() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+    }
+
+    function createSitarAudioBuffer(ctx, duration) {
+      const sampleRate = ctx.sampleRate;
+      const numFrames = Math.ceil(sampleRate * duration);
+      const buffer = ctx.createBuffer(2, numFrames, sampleRate);
+      const left = buffer.getChannelData(0);
+      const right = buffer.getChannelData(1);
+
+      // Authentic Yaman & Bhupali Raga Melody Notes
+      const S = [
+        { f1: 246.94, f2: 293.66, d: 2.0 },
+        { f1: 293.66, f2: 329.63, d: 2.2 },
+        { f1: 329.63, f2: 392.00, d: 2.5 },
+        { f1: 392.00, f2: 440.00, d: 2.0 },
+        { f1: 440.00, f2: 523.25, d: 2.8 },
+        { f1: 523.25, f2: 440.00, d: 2.0 },
+        { f1: 440.00, f2: 392.00, d: 2.2 },
+        { f1: 392.00, f2: 329.63, d: 2.5 },
+        { f1: 329.63, f2: 261.63, d: 3.5 },
+        { f1: 261.63, f2: 329.63, d: 2.2 },
+        { f1: 329.63, f2: 392.00, d: 2.2 },
+        { f1: 392.00, f2: 523.25, d: 2.5 },
+        { f1: 523.25, f2: 587.33, d: 2.0 },
+        { f1: 587.33, f2: 659.25, d: 2.5 },
+        { f1: 659.25, f2: 523.25, d: 2.0 },
+        { f1: 523.25, f2: 261.63, d: 4.0 },
+      ];
+      const totalCycle = S.reduce((a, b) => a + b.d, 0);
+
+      for (let i = 0; i < numFrames; i++) {
+        const t = i / sampleRate;
+
+        // 1. Classical 4-string Tanpura in C# (98Hz, 130.81Hz, 131.2Hz, 65.4Hz)
+        const cycle = t % 4.8;
+        const strIdx = Math.floor(cycle / 1.2);
+        const strT = cycle % 1.2;
+        const decay = Math.exp(-strT * 1.8);
+        const freq = strIdx === 0 ? 98 : strIdx === 1 ? 130.81 : strIdx === 2 ? 131.25 : 65.41;
+        const tanpura = (Math.sin(2 * Math.PI * freq * t) + Math.sin(4 * Math.PI * freq * t) * 0.5) * decay * 0.10;
+
+        // 2. Sitar with Jawari harmonics & Meend glissando
+        const noteCycleT = t % totalCycle;
+        let cum = 0;
+        let cur = S[0];
+        let offset = 0;
+        for (const n of S) {
+          if (noteCycleT >= cum && noteCycleT < cum + n.d) {
+            cur = n;
+            offset = noteCycleT - cum;
+            break;
+          }
+          cum += n.d;
+        }
+
+        const prog = offset / cur.d;
+        const glide = 0.5 - 0.5 * Math.cos(Math.PI * Math.min(1, prog * 1.6));
+        const pitch = cur.f1 + (cur.f2 - cur.f1) * glide + (prog > 0.3 ? Math.sin(2 * Math.PI * 5.2 * t) * 2 : 0);
+        const strDecay = Math.exp(-prog * 2.8);
+        const attack = Math.min(1, offset * 250);
+
+        // Jawari bridge phase modulation
+        const jawari = 0.4 * Math.exp(-prog * 2.2);
+        const mod = jawari * Math.sin(2 * Math.PI * pitch * t);
+        const h1 = Math.sin(2 * Math.PI * pitch * t + mod);
+        const h2 = Math.sin(4 * Math.PI * pitch * t + mod * 0.7) * 0.65;
+        const h3 = Math.sin(6 * Math.PI * pitch * t + mod * 0.45) * 0.4;
+        const h4 = Math.sin(8 * Math.PI * pitch * t) * 0.22;
+        const sitar = (h1 + h2 + h3 + h4) * strDecay * attack * 0.26;
+
+        // 3. Auspicious Temple Bell chime
+        const bellT = t % 4.8;
+        const bell = bellT < 1.0 ? Math.sin(2 * Math.PI * 1864 * t) * Math.exp(-bellT * 4) * 0.03 : 0;
+
+        // Dynamic 70% volume fade-in (0s to 2s) & fade-out (37s to 40s)
+        let vol = 0.70;
+        if (t < 2.0) {
+          vol = 0.70 * (t / 2.0);
+        } else if (t > 37.0) {
+          vol = 0.70 * Math.max(0, (40.0 - t) / 3.0);
+        }
+
+        const sample = (tanpura + sitar + bell) * vol;
+        left[i] = sample;
+        right[i] = sample;
+      }
+      return buffer;
+    }
+
+    function startAudioPlayback(startTime = 0) {
+      if (!audioEnabled) return;
+      initAudio();
+      stopAudioPlayback();
+
+      if (!audioBuffer) {
+        audioBuffer = createSitarAudioBuffer(audioCtx, DURATION + 2);
+      }
+
+      audioSource = audioCtx.createBufferSource();
+      audioSource.buffer = audioBuffer;
+
+      audioGain = audioCtx.createGain();
+      audioGain.gain.setValueAtTime(1.0, audioCtx.currentTime);
+
+      audioSource.connect(audioGain);
+      audioGain.connect(audioCtx.destination);
+
+      const offset = Math.max(0, Math.min(startTime, DURATION));
+      audioSource.start(0, offset);
+    }
+
+    function stopAudioPlayback() {
+      if (audioSource) {
+        try {
+          audioSource.stop();
+          audioSource.disconnect();
+        } catch(e) {}
+        audioSource = null;
+      }
+    }
+
+    function toggleAudio() {
+      audioEnabled = !audioEnabled;
+      audioToggleBtn.innerText = audioEnabled ? '🔊 Audio: ON' : '🔇 Audio: OFF';
+      if (audioEnabled && isPlaying) {
+        startAudioPlayback(currentTime);
+      } else {
+        stopAudioPlayback();
+      }
+    }
+
+    // ==========================================
+    // 4. DRAWING UTILITIES
+    // ==========================================
+    function drawBackground(t) {
+      // Primary #0B5D3B, Deep Background #04261A
+      const bgGrad = ctx.createRadialGradient(
+        WIDTH / 2, HEIGHT / 2, 100,
+        WIDTH / 2, HEIGHT / 2, WIDTH * 0.75
+      );
+      bgGrad.addColorStop(0, '#0B5D3B');
+      bgGrad.addColorStop(0.65, '#073D26');
+      bgGrad.addColorStop(1, '#04261A');
+      ctx.fillStyle = bgGrad;
+      ctx.fillRect(0, 0, WIDTH, HEIGHT);
+
+      // Central divine aura: soft golden glow rgba(212, 175, 55, 0.25)
+      const aura = ctx.createRadialGradient(WIDTH / 2, HEIGHT / 2, 40, WIDTH / 2, HEIGHT / 2, 540);
+      aura.addColorStop(0, 'rgba(212, 175, 55, 0.25)');
+      aura.addColorStop(0.5, 'rgba(212, 175, 55, 0.08)');
+      aura.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      ctx.fillStyle = aura;
+      ctx.fillRect(0, 0, WIDTH, HEIGHT);
+
+      // Subtle rotating mandala: slow rotation (6°/s = 0.1047 rad/s), opacity 0.08
+      ctx.save();
+      ctx.translate(WIDTH / 2, HEIGHT / 2);
+      ctx.rotate(t * 0.1047);
+      ctx.globalAlpha = 0.08;
+      ctx.strokeStyle = '#D4AF37';
+      ctx.lineWidth = 2;
+      const petals = 16;
+      const r = 440;
+      for (let i = 0; i < petals; i++) {
+        ctx.beginPath();
+        ctx.rotate((Math.PI * 2) / petals);
+        ctx.moveTo(0, 0);
+        ctx.quadraticCurveTo(r * 0.4, r * 0.6, 0, r);
+        ctx.quadraticCurveTo(-r * 0.4, r * 0.6, 0, 0);
+        ctx.stroke();
+      }
+      ctx.beginPath();
+      ctx.arc(0, 0, r * 0.75, 0, Math.PI * 2);
+      ctx.arc(0, 0, r * 0.35, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function drawToran(t) {
+      // Mango-leaf toran at top edge
+      ctx.save();
+      const segments = 32;
+      const stepX = WIDTH / segments;
+      for (let i = 0; i <= segments; i++) {
+        const x = i * stepX;
+        const norm = (i - segments / 2) / (segments / 2);
+        const sag = (1 - norm * norm) * 32 + 40;
+
+        ctx.save();
+        ctx.translate(x, sag);
+        ctx.fillStyle = '#186A3B';
+        ctx.beginPath();
+        ctx.ellipse(0, 8, 9, 16, Math.sin(t + i * 0.4) * 0.08, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.strokeStyle = '#FFD700';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(0, 20);
+        ctx.stroke();
+
+        // Golden bell hanging every 4 leaves
+        if (i % 4 === 0) {
+          ctx.fillStyle = '#FFD700';
+          ctx.beginPath();
+          ctx.moveTo(-7, 34);
+          ctx.lineTo(7, 34);
+          ctx.lineTo(5, 22);
+          ctx.lineTo(-5, 22);
+          ctx.closePath();
+          ctx.fill();
+          ctx.beginPath();
+          ctx.arc(0, 36, 2.5, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.restore();
+      }
+      ctx.restore();
+    }
+
+    function drawDiyas(t, glowMultiplier = 1.0) {
+      // Two flickering diyas at bottom corners with sine noise
+      const diyaY = HEIGHT - 80;
+      [90, WIDTH - 90].forEach((dx) => {
+        ctx.save();
+        ctx.translate(dx, diyaY);
+
+        // Brass Diya Base
+        ctx.fillStyle = '#D4AF37';
+        ctx.beginPath();
+        ctx.ellipse(0, 0, 30, 14, 0, 0, Math.PI);
+        ctx.fill();
+        ctx.fillRect(-12, 14, 24, 6);
+
+        // Flame with sine wave animation
+        const flicker = Math.sin(t * 9 + dx) * 2.5;
+        const flameH = (22 + flicker) * glowMultiplier;
+
+        const fGrad = ctx.createRadialGradient(0, -4, 2, 0, -12, flameH);
+        fGrad.addColorStop(0, '#FFFFFF');
+        fGrad.addColorStop(0.3, '#FFF275');
+        fGrad.addColorStop(0.7, '#FF7A00');
+        fGrad.addColorStop(1, 'rgba(255, 60, 0, 0)');
+
+        ctx.fillStyle = fGrad;
+        ctx.beginPath();
+        ctx.moveTo(-6, -2);
+        ctx.quadraticCurveTo(-8, -flameH * 0.6, 0, -flameH);
+        ctx.quadraticCurveTo(8, -flameH * 0.6, 6, -2);
+        ctx.closePath();
+        ctx.fill();
+
+        // Ambient glow
+        const glowRad = 60 * glowMultiplier;
+        const gGrad = ctx.createRadialGradient(0, -10, 4, 0, -10, glowRad);
+        gGrad.addColorStop(0, 'rgba(255, 215, 0, 0.28)');
+        gGrad.addColorStop(1, 'rgba(255, 120, 0, 0)');
+        ctx.fillStyle = gGrad;
+        ctx.beginPath();
+        ctx.arc(0, -10, glowRad, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.restore();
+      });
+    }
+
+    function drawLotusPetals(t) {
+      ctx.save();
+      for (const p of PETALS) {
+        const y = ((p.y + t * p.speedY) % 1) * HEIGHT;
+        const x = ((p.x * WIDTH + Math.sin(t * 1.4 + p.phase) * 50) % WIDTH + WIDTH) % WIDTH;
+        const rot = t * p.rotSpeed + p.phase;
+
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.rotate(rot);
+        ctx.fillStyle = p.isPink ? '#FF85A1' : '#F5E6A8';
+        ctx.globalAlpha = 0.40 * (0.6 + 0.4 * Math.sin(t * 2 + p.phase));
+        ctx.beginPath();
+        ctx.ellipse(0, 0, p.size * 1.8, p.size, Math.PI / 4, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+      ctx.restore();
+    }
+
+    function drawGoldenStardust(t) {
+      ctx.save();
+      for (const p of PARTICLES) {
+        const y = ((p.y + t * p.speedY) % 1) * HEIGHT;
+        const x = ((p.x * WIDTH + Math.cos(t * 1.2 + p.phase) * 35) % WIDTH + WIDTH) % WIDTH;
+        const pulse = 0.5 + 0.5 * Math.sin(t * 4 + p.phase);
+        ctx.fillStyle = '#FFE494';
+        ctx.globalAlpha = 0.35 * pulse;
+        ctx.beginPath();
+        ctx.arc(x, y, p.size, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+
+    function drawGaneshMotif(cx, cy, s = 1.0, color = '#FFD700') {
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.scale(s, s);
+      ctx.strokeStyle = color;
+      ctx.fillStyle = color;
+      ctx.lineWidth = 4;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+
+      // Crown
+      ctx.beginPath();
+      ctx.moveTo(-16, -26);
+      ctx.lineTo(0, -46);
+      ctx.lineTo(16, -26);
+      ctx.closePath();
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(0, -46, 3.5, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Trunk
+      ctx.beginPath();
+      ctx.moveTo(0, -22);
+      ctx.bezierCurveTo(24, -22, 28, 5, 12, 18);
+      ctx.bezierCurveTo(4, 25, 6, 38, 18, 38);
+      ctx.stroke();
+
+      // Ear
+      ctx.beginPath();
+      ctx.bezierCurveTo(-4, -18, -26, -14, -26, 4);
+      ctx.bezierCurveTo(-26, 16, -10, 20, 0, 14);
+      ctx.stroke();
+
+      // Modak
+      ctx.beginPath();
+      ctx.arc(24, 34, 4.5, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Tilak
+      ctx.beginPath();
+      ctx.arc(0, -10, 3, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.restore();
+    }
+
+    function drawRoyalBorder() {
+      ctx.save();
+      const pad = 42;
+      const inner = 54;
+      ctx.strokeStyle = '#D4AF37';
+      ctx.lineWidth = 3;
+      ctx.strokeRect(pad, pad, WIDTH - pad * 2, HEIGHT - pad * 2);
+
+      ctx.strokeStyle = '#F5E6A8';
+      ctx.lineWidth = 1.2;
+      ctx.setLineDash([8, 6]);
+      ctx.strokeRect(inner, inner, WIDTH - inner * 2, HEIGHT - inner * 2);
+      ctx.setLineDash([]);
+
+      // 4 Corner flourishes
+      const corners = [
+        [pad, pad, 1, 1],
+        [WIDTH - pad, pad, -1, 1],
+        [WIDTH - pad, HEIGHT - pad, -1, -1],
+        [pad, HEIGHT - pad, 1, -1]
+      ];
+      corners.forEach(([cx, cy, sx, sy]) => {
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.scale(sx, sy);
+        ctx.strokeStyle = '#D4AF37';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.moveTo(0, 36);
+        ctx.lineTo(36, 36);
+        ctx.lineTo(36, 0);
+        ctx.stroke();
+        ctx.fillStyle = '#FFD700';
+        ctx.beginPath();
+        ctx.moveTo(18, 10);
+        ctx.lineTo(26, 18);
+        ctx.lineTo(18, 26);
+        ctx.lineTo(10, 18);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+      });
+      ctx.restore();
+    }
+
+    // Text Drawer with smooth fade and 20px upward rise ease-out
+    function drawText(text, x, y, options = {}) {
+      const {
+        font = "'Noto Sans Devanagari', sans-serif",
+        fontSize = 42,
+        fontWeight = '600',
+        color = '#FFF8E7',
+        gradient = null,
+        align = 'center',
+        shadow = true,
+        alpha = 1.0,
+        riseY = 0
+      } = options;
+
+      if (alpha <= 0.001) return;
+
+      ctx.save();
+      ctx.globalAlpha *= alpha;
+      ctx.textAlign = align;
+      ctx.textBaseline = 'middle';
+      ctx.font = `${fontWeight} ${fontSize}px ${font}`;
+
+      const targetY = y - (1 - Math.min(1, alpha)) * 20 + riseY;
+
+      if (shadow) {
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.9)';
+        ctx.shadowBlur = 14;
+        ctx.shadowOffsetY = 3;
+      }
+
+      if (gradient) {
+        const textW = ctx.measureText(text).width || 400;
+        const g = ctx.createLinearGradient(x - textW / 2, targetY, x + textW / 2, targetY);
+        gradient.forEach((c, idx) => g.addColorStop(idx / (gradient.length - 1), c));
+        ctx.fillStyle = g;
+      } else {
+        ctx.fillStyle = color;
+      }
+
+      // Handle multiline
+      const lines = text.split('\n');
+      const lh = fontSize * 1.34;
+      const startY = targetY - ((lines.length - 1) * lh) / 2;
+
+      lines.forEach((line, idx) => {
+        ctx.fillText(line, x, startY + idx * lh);
+      });
+
+      ctx.restore();
+    }
+
+    // ==========================================
+    // 5. THE 7 SCENES RENDER ENGINE (40.0s EXACT)
+    // ==========================================
+    function renderFrame(time) {
+      ctx.clearRect(0, 0, WIDTH, HEIGHT);
+
+      // Global Visuals
+      drawBackground(time);
+      drawRoyalBorder();
+      drawLotusPetals(time);
+      drawGoldenStardust(time);
+
+      // Determine active scene based on prompt timeline
+      // S1: 0-6s, S2: 6-12s, S3: 12-18s, S4: 18-24s, S5: 24-32s, S6: 32-37s, S7: 37-40s
+      let sceneIdx = 0;
+      let sStart = 0;
+      let sEnd = 6;
+
+      if (time < 6.0) {
+        sceneIdx = 1; sStart = 0; sEnd = 6.0;
+      } else if (time < 12.0) {
+        sceneIdx = 2; sStart = 6.0; sEnd = 12.0;
+      } else if (time < 18.0) {
+        sceneIdx = 3; sStart = 12.0; sEnd = 18.0;
+      } else if (time < 24.0) {
+        sceneIdx = 4; sStart = 18.0; sEnd = 24.0;
+      } else if (time < 32.0) {
+        sceneIdx = 5; sStart = 24.0; sEnd = 32.0;
+      } else if (time < 37.0) {
+        sceneIdx = 6; sStart = 32.0; sEnd = 37.0;
+      } else {
+        sceneIdx = 7; sStart = 37.0; sEnd = 40.0;
+      }
+
+      // Draw Top Toran in Scenes 2, 3, 5, 7
+      if ([2, 3, 5, 7].includes(sceneIdx)) {
+        drawToran(time);
+      }
+
+      // Diyas (glow brighter during Scene 5)
+      const diyaGlow = sceneIdx === 5 ? 1.4 : 1.0;
+      drawDiyas(time, diyaGlow);
+
+      const st = time - sStart;
+      const sDur = sEnd - sStart;
+
+      // ----------------------------------------------------
+      // SCENE 1: SHREE GANESH VANDANA (0.0s – 6.0s)
+      // ----------------------------------------------------
+      if (sceneIdx === 1) {
+        // Ganesha motif fades in at top-center (0.0-1.0s), holds, fades out at 5.5s
+        const gAlpha = st < 1.0 ? st : (st > 5.5 ? Math.max(0, (6.0 - st) / 0.5) : 1.0);
+        ctx.save();
+        ctx.globalAlpha = gAlpha;
+        drawGaneshMotif(WIDTH / 2, HEIGHT * 0.22, 1.35, '#FFD700');
+        ctx.restore();
+
+        // Heading rises from below (0.5-1.5s), holds, fades at 5.5s
+        const hAlpha = st < 0.5 ? 0 : (st < 1.5 ? (st - 0.5) : (st > 5.3 ? Math.max(0, (5.8 - st) / 0.5) : 1.0));
+        drawText('॥ श्री गणेशाय नमः ॥', WIDTH / 2, HEIGHT * 0.38, {
+          fontSize: 64,
+          fontWeight: '800',
+          gradient: ['#FFF8DC', '#FFD700', '#F59E0B'],
+          alpha: hAlpha
+        });
+
+        // Opening Shloka (1.5-2.5s, holds until 5.0s)
+        const sAlpha = st < 1.5 ? 0 : (st < 2.5 ? (st - 1.5) : (st > 5.0 ? Math.max(0, (5.6 - st) / 0.6) : 1.0));
+        drawText('वक्रतुण्ड महाकाय सूर्यकोटि समप्रभ।\nनिर्विघ्नं कुरु मे देव सर्वकार्येषु सर्वदा॥', WIDTH / 2, HEIGHT * 0.52, {
+          fontSize: 34,
+          fontWeight: '600',
+          color: '#F5E6A8',
+          alpha: sAlpha
+        });
+
+        // Subtitle appears at 3.5s in gold
+        const subAlpha = st < 3.5 ? 0 : Math.min(1, (st - 3.5) * 1.5);
+        drawText('॥ मांगलिक शुभ विवाह आमंत्रण ॥', WIDTH / 2, HEIGHT * 0.67, {
+          fontSize: 42,
+          fontWeight: '700',
+          color: '#FFD700',
+          alpha: subAlpha
+        });
+
+        // Invocation appears at 4.5s in small text
+        const invAlpha = st < 4.5 ? 0 : Math.min(1, (st - 4.5) * 1.5);
+        drawText('परमपिता परमात्मा एवं कुलदेवता के शुभाशीर्वाद से', WIDTH / 2, HEIGHT * 0.77, {
+          fontSize: 28,
+          color: '#FFF8E7',
+          alpha: invAlpha
+        });
+
+        // Transition out: Mandala Bloom (5.5-6.0s)
+        if (time >= 5.5) {
+          drawMandalaBloomTransition((time - 5.5) / 0.5);
+        }
+      }
+
+      // ----------------------------------------------------
+      // SCENE 2: PERSONAL INVITATION (GROOM SIDE) (6.0s – 12.0s)
+      // ----------------------------------------------------
+      else if (sceneIdx === 2) {
+        // Heading fades in (6.3-7.0s)
+        const hAlpha = st < 0.3 ? 0 : Math.min(1, (st - 0.3) / 0.7);
+        drawText('॥ सस्नेह निमंत्रण ॥', WIDTH / 2, HEIGHT * 0.25, {
+          fontSize: 54,
+          fontWeight: '700',
+          gradient: ['#FFF8DC', '#FFD700', '#D4AF37'],
+          alpha: hAlpha
+        });
+
+        // Invitation Body: typewriter-style line reveal (7.0s to 10.0s)
+        const l1Alpha = st < 1.0 ? 0 : Math.min(1, (st - 1.0) / 0.8);
+        const l2Alpha = st < 1.8 ? 0 : Math.min(1, (st - 1.8) / 0.8);
+        const l3Alpha = st < 2.6 ? 0 : Math.min(1, (st - 2.6) / 0.8);
+
+        drawText('मान्यवर, हमारे प्रिय सुपुत्र के शुभ विवाह की पावन वेला निश्चित हुई है।', WIDTH / 2, HEIGHT * 0.40, {
+          fontSize: 34,
+          color: '#FFF8E7',
+          alpha: l1Alpha
+        });
+        drawText('इस मांगलिक अवसर पर आप सभी स्नेही स्वजनों, बंधु-बांधवों एवं मित्रों की गरिमामयी', WIDTH / 2, HEIGHT * 0.47, {
+          fontSize: 34,
+          color: '#FFF8E7',
+          alpha: l2Alpha
+        });
+        drawText('उपस्थिति एवं स्नेहिल आशीर्वाद सादर प्रार्थनीय है॥', WIDTH / 2, HEIGHT * 0.54, {
+          fontSize: 34,
+          color: '#FFF8E7',
+          alpha: l3Alpha
+        });
+
+        // Banner appears at 10.3s (st = 4.3s), gold color, gentle pulse
+        if (st >= 4.3) {
+          const bAlpha = Math.min(1, (st - 4.3) / 0.6);
+          const pulse = 1 + 0.03 * Math.sin(time * 5);
+          ctx.save();
+          ctx.translate(WIDTH / 2, HEIGHT * 0.70);
+          ctx.scale(pulse, pulse);
+          drawText('॥ आप सभी सपरिवार सादर आमंत्रित हैं ॥', 0, 0, {
+            fontSize: 46,
+            fontWeight: '800',
+            gradient: ['#FFFCE8', '#FFD700', '#F59E0B'],
+            alpha: bAlpha
+          });
+          ctx.restore();
+        }
+
+        // Transition out: Gold Stardust (11.5-12.0s)
+        if (time >= 11.5) {
+          drawGoldStardustTransition((time - 11.5) / 0.5);
+        }
+      }
+
+      // ----------------------------------------------------
+      // SCENE 3: COUPLE INTRODUCTION (12.0s – 18.0s)
+      // ----------------------------------------------------
+      else if (sceneIdx === 3) {
+        // Heading slides in from top (12.0-12.8s)
+        const hAlpha = Math.min(1, st / 0.8);
+        drawText('॥ परिणय सूत्र बंधन ॥', WIDTH / 2, HEIGHT * 0.22, {
+          fontSize: 46,
+          fontWeight: '700',
+          gradient: ['#FFF8DC', '#FFD700', '#F59E0B'],
+          alpha: hAlpha
+        });
+
+        // Groom Block (Highlighted, left-center X: 520)
+        const gAlpha = st < 1.0 ? 0 : Math.min(1, (st - 1.0) / 0.8);
+        drawText('आयुष्मान आरव', 520, HEIGHT * 0.38, {
+          fontSize: 60,
+          fontWeight: '800',
+          gradient: ['#FFF8DC', '#FFD700', '#E5C065'],
+          alpha: gAlpha
+        });
+
+        if (st >= 1.5) {
+          const pAlpha = Math.min(1, (st - 1.5) / 0.6);
+          drawText('सुपुत्र: श्रीमती सुमित्रा एवं श्री रमेश शर्मा', 520, HEIGHT * 0.48, {
+            fontSize: 28,
+            color: '#FFF8E7',
+            alpha: pAlpha
+          });
+        }
+
+        if (st >= 1.8) {
+          const engAlpha = Math.min(1, (st - 1.8) / 0.6);
+          drawText('Aarav Sharma', 520, HEIGHT * 0.56, {
+            font: "'Cormorant Garamond', Georgia, serif",
+            fontWeight: '700',
+            fontSize: 34,
+            color: '#F5E6A8',
+            alpha: engAlpha
+          });
+        }
+
+        if (st >= 2.0) {
+          const nickAlpha = Math.min(1, (st - 2.0) / 0.6);
+          drawText('(प्रेम से: Aru)', 520, HEIGHT * 0.64, {
+            fontSize: 26,
+            color: '#D4AF37',
+            alpha: nickAlpha
+          });
+        }
+
+        // Connector ॥ संग ॥ fades in at center (14.5s -> st = 2.5s)
+        if (st >= 2.5) {
+          const cAlpha = Math.min(1, (st - 2.5) / 0.6);
+          drawText('॥ संग ॥', WIDTH / 2, HEIGHT * 0.52, {
+            fontSize: 44,
+            fontWeight: '700',
+            color: '#FFD700',
+            alpha: cAlpha
+          });
+        }
+
+        // Bride Block (Right-center X: 1400)
+        if (st >= 3.0) {
+          const bAlpha = Math.min(1, (st - 3.0) / 0.7);
+          drawText('आयुष्मती अनन्या', 1400, HEIGHT * 0.38, {
+            fontSize: 60,
+            fontWeight: '800',
+            gradient: ['#FFF8DC', '#FFD700', '#E5C065'],
+            alpha: bAlpha
+          });
+        }
+
+        if (st >= 3.5) {
+          const bpAlpha = Math.min(1, (st - 3.5) / 0.6);
+          drawText('सुपुत्री: श्रीमती कविता एवं श्री राजेश पटेल', 1400, HEIGHT * 0.48, {
+            fontSize: 28,
+            color: '#FFF8E7',
+            alpha: bpAlpha
+          });
+        }
+
+        if (st >= 3.8) {
+          const cityAlpha = Math.min(1, (st - 3.8) / 0.6);
+          drawText('निवासी: उदयपुर', 1400, HEIGHT * 0.56, {
+            fontSize: 28,
+            color: '#F5E6A8',
+            alpha: cityAlpha
+          });
+        }
+
+        if (st >= 4.0) {
+          const bengAlpha = Math.min(1, (st - 4.0) / 0.6);
+          drawText('Ananya Patel', 1400, HEIGHT * 0.64, {
+            font: "'Cormorant Garamond', Georgia, serif",
+            fontWeight: '700',
+            fontSize: 34,
+            color: '#F5E6A8',
+            alpha: bengAlpha
+          });
+        }
+
+        // Transition out: Mandala Bloom (17.5-18.0s)
+        if (time >= 17.5) {
+          drawMandalaBloomTransition((time - 17.5) / 0.5);
+        }
+      }
+
+      // ----------------------------------------------------
+      // SCENE 4: COUPLE PHOTO SHOWCASE (18.0s – 24.0s)
+      // ----------------------------------------------------
+      else if (sceneIdx === 4) {
+        // Heading appears at 19.5s (st = 1.5s)
+        if (st >= 1.5) {
+          const hAlpha = Math.min(1, (st - 1.5) / 0.6);
+          drawText('॥ शुभ परिणय ॥', WIDTH / 2, HEIGHT * 0.12, {
+            fontSize: 44,
+            fontWeight: '700',
+            gradient: ['#FFF8DC', '#FFD700', '#F59E0B'],
+            alpha: hAlpha
+          });
+        }
+
+        // Royal Arch Frame (Shahi Mehraab)
+        const frameW = 960;
+        const frameH = 540;
+        const fx = WIDTH / 2 - frameW / 2;
+        const fy = HEIGHT * 0.18;
+
+        // Subtle Ken Burns zoom: 120% to 124% across 6s
+        const kbProgress = st / 6.0;
+        const kbZoom = 1.20 + kbProgress * 0.04;
+
+        ctx.save();
+        // Royal Arch clip path
+        ctx.beginPath();
+        const r = frameW / 2;
+        const archH = frameH * 0.40;
+        ctx.moveTo(fx, fy + frameH);
+        ctx.lineTo(fx, fy + archH);
+        ctx.bezierCurveTo(fx, fy, fx + r * 0.4, fy, fx + r, fy - 8);
+        ctx.bezierCurveTo(fx + frameW - r * 0.4, fy, fx + frameW, fy, fx + frameW, fy + archH);
+        ctx.lineTo(fx + frameW, fy + frameH);
+        ctx.closePath();
+        ctx.clip();
+
+        // Royal Gold filter applied to photo (+10% brightness, +8% saturation)
+        if ('filter' in ctx) {
+          ctx.filter = 'brightness(1.10) saturate(1.08) sepia(0.12)';
+        }
+
+        // Draw Ken Burns zoomed image with Offset Y: -5px
+        if (coupleImage.complete && coupleImage.naturalWidth > 0) {
+          const destW = frameW * kbZoom;
+          const destH = frameH * kbZoom;
+          const destX = fx + (frameW - destW) / 2;
+          const destY = fy + (frameH - destH) / 2 - 5;
+          ctx.drawImage(coupleImage, destX, destY, destW, destH);
+        }
+        ctx.restore();
+
+        // Double Gold Border around Arch
+        ctx.save();
+        ctx.strokeStyle = '#D4AF37';
+        ctx.lineWidth = 5;
+        ctx.beginPath();
+        ctx.moveTo(fx, fy + frameH);
+        ctx.lineTo(fx, fy + archH);
+        ctx.bezierCurveTo(fx, fy, fx + r * 0.4, fy, fx + r, fy - 8);
+        ctx.bezierCurveTo(fx + frameW - r * 0.4, fy, fx + frameW, fy, fx + frameW, fy + archH);
+        ctx.lineTo(fx + frameW, fy + frameH);
+        ctx.closePath();
+        ctx.stroke();
+
+        ctx.strokeStyle = '#F5E6A8';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        ctx.restore();
+
+        // Caption below frame at 20.0s (st = 2.0s)
+        if (st >= 2.0) {
+          const capAlpha = Math.min(1, (st - 2.0) / 0.7);
+          drawText('आयुष्मान आरव   संग   आयुष्मती अनन्या', WIDTH / 2, HEIGHT * 0.92, {
+            fontSize: 40,
+            fontWeight: '700',
+            gradient: ['#FFF8DC', '#FFD700', '#F59E0B'],
+            alpha: capAlpha
+          });
+        }
+
+        // Transition out: Gold Stardust (23.5-24.0s)
+        if (time >= 23.5) {
+          drawGoldStardustTransition((time - 23.5) / 0.5);
+        }
+      }
+
+      // ----------------------------------------------------
+      // SCENE 5: CEREMONY SCHEDULE & MUHURAT (24.0s – 32.0s)
+      // ----------------------------------------------------
+      else if (sceneIdx === 5) {
+        // Heading (24.0-24.8s)
+        const hAlpha = Math.min(1, st / 0.8);
+        drawText('॥ मांगलिक कार्यक्रम एवं शुभ मुहूर्त ॥', WIDTH / 2, HEIGHT * 0.22, {
+          fontSize: 46,
+          fontWeight: '700',
+          gradient: ['#FFF8DC', '#FFD700', '#F59E0B'],
+          alpha: hAlpha
+        });
+
+        // Date in large Devanagari calligraphy-style (25.0s -> st = 1.0s)
+        if (st >= 1.0) {
+          const dAlpha = Math.min(1, (st - 1.0) / 0.8);
+          drawText('शनिवार, २८ नवंबर २०२६', WIDTH / 2, HEIGHT * 0.42, {
+            fontSize: 66,
+            fontWeight: '800',
+            gradient: ['#FFFCE8', '#FFD700', '#E5C065'],
+            alpha: dAlpha
+          });
+        }
+
+        // Function Card (25.8s -> st = 1.8s)
+        if (st >= 1.8) {
+          const fAlpha = Math.min(1, (st - 1.8) / 0.8);
+          drawText('शुभ विवाह एवं फेरे', WIDTH / 2, HEIGHT * 0.60, {
+            fontSize: 46,
+            fontWeight: '700',
+            color: '#FFF8E7',
+            alpha: fAlpha
+          });
+          drawText('शाम ०७:०० बजे (गोधूलि बेला)', WIDTH / 2, HEIGHT * 0.72, {
+            fontSize: 36,
+            color: '#F5E6A8',
+            alpha: fAlpha
+          });
+        }
+
+        // Transition out: Mandala Bloom (31.5-32.0s)
+        if (time >= 31.5) {
+          drawMandalaBloomTransition((time - 31.5) / 0.5);
+        }
+      }
+
+      // ----------------------------------------------------
+      // SCENE 6: VENUE & HOSPITALITY (32.0s – 37.0s)
+      // ----------------------------------------------------
+      else if (sceneIdx === 6) {
+        // Heading (32.0-32.6s)
+        const hAlpha = Math.min(1, st / 0.6);
+        drawText('॥ परिणय स्थल ॥', WIDTH / 2, HEIGHT * 0.22, {
+          fontSize: 46,
+          fontWeight: '700',
+          gradient: ['#FFF8DC', '#FFD700', '#F59E0B'],
+          alpha: hAlpha
+        });
+
+        // Venue Name in gold Cormorant italic (32.8s -> st = 0.8s)
+        if (st >= 0.8) {
+          const vAlpha = Math.min(1, (st - 0.8) / 0.6);
+          drawText('The Grand Heritage Palace', WIDTH / 2, HEIGHT * 0.42, {
+            font: "'Cormorant Garamond', Georgia, serif",
+            fontWeight: '700',
+            fontSize: 62,
+            gradient: ['#FFF8DC', '#FFD700', '#E5C065'],
+            alpha: vAlpha
+          });
+        }
+
+        // Venue Address (33.3s -> st = 1.3s)
+        if (st >= 1.3) {
+          const aAlpha = Math.min(1, (st - 1.3) / 0.6);
+          drawText('उदयपुर, राजस्थान', WIDTH / 2, HEIGHT * 0.55, {
+            fontSize: 38,
+            color: '#FFF8E7',
+            alpha: aAlpha
+          });
+        }
+
+        // Welcome Note (34.0-35.0s, max 2 lines)
+        if (st >= 2.0) {
+          const wAlpha = Math.min(1, (st - 2.0) / 0.8);
+          drawText('आपकी उपस्थिति हमारे इस उत्सव को भव्यता एवं सार्थकता प्रदान करेगी', WIDTH / 2, HEIGHT * 0.72, {
+            fontSize: 32,
+            color: '#F5E6A8',
+            alpha: wAlpha
+          });
+        }
+
+        // Transition out: Gold Stardust (36.5-37.0s)
+        if (time >= 36.5) {
+          drawGoldStardustTransition((time - 36.5) / 0.5);
+        }
+      }
+
+      // ----------------------------------------------------
+      // SCENE 7: SIGN-OFF & BLESSINGS (37.0s – 40.0s)
+      // ----------------------------------------------------
+      else if (sceneIdx === 7) {
+        // Heading (37.0-37.5s)
+        const hAlpha = Math.min(1, st / 0.5);
+        drawText('॥ सस्नेह आमंत्रण एवं दर्शनाभिलाषी ॥', WIDTH / 2, HEIGHT * 0.20, {
+          fontSize: 44,
+          fontWeight: '700',
+          gradient: ['#FFF8DC', '#FFD700', '#F59E0B'],
+          alpha: hAlpha
+        });
+
+        // Couplet (37.5-38.5s)
+        if (st >= 0.5) {
+          const cAlpha = Math.min(1, (st - 0.5) / 0.7);
+          drawText('भेज रहे हैं स्नेह निमंत्रण, प्रियवर तुम्हें बुलाने को।\nहे आत्मीय स्वजन, भूल न जाना आने को॥', WIDTH / 2, HEIGHT * 0.38, {
+            fontSize: 32,
+            color: '#FFF8E7',
+            alpha: cAlpha
+          });
+        }
+
+        // Signature Block (38.6s -> st = 1.6s)
+        if (st >= 1.6) {
+          const sigAlpha = Math.min(1, (st - 1.6) / 0.5);
+          drawText('Samast Snehi Swajan', WIDTH / 2, HEIGHT * 0.56, {
+            font: "'Cormorant Garamond', Georgia, serif",
+            fontWeight: '700',
+            fontSize: 32,
+            color: '#D4AF37',
+            alpha: sigAlpha
+          });
+          drawText('शर्मा परिवार एवं पटेल परिवार', WIDTH / 2, HEIGHT * 0.65, {
+            fontSize: 38,
+            fontWeight: '700',
+            color: '#FFF8E7',
+            alpha: sigAlpha
+          });
+        }
+
+        // Closing Shloka (39.0s -> st = 2.0s)
+        if (st >= 2.0) {
+          const shlokaAlpha = Math.min(1, (st - 2.0) / 0.5);
+          drawText('॥ ॐ शान्तिः शान्तिः शान्तिः ॥', WIDTH / 2, HEIGHT * 0.78, {
+            fontSize: 34,
+            fontWeight: '700',
+            color: '#FFD700',
+            alpha: shlokaAlpha
+          });
+        }
+
+        // Full fade-out to black at 39.7-40.0s
+        if (time >= 39.7) {
+          const blackAlpha = (time - 39.7) / 0.3;
+          ctx.fillStyle = `rgba(4, 38, 26, ${blackAlpha})`;
+          ctx.fillRect(0, 0, WIDTH, HEIGHT);
+        }
+      }
+    }
+
+    // Transitions
+    function drawMandalaBloomTransition(progress) {
+      ctx.save();
+      const r = progress * WIDTH * 0.85;
+      const alpha = Math.sin(progress * Math.PI) * 0.85;
+      const g = ctx.createRadialGradient(WIDTH / 2, HEIGHT / 2, 0, WIDTH / 2, HEIGHT / 2, r);
+      g.addColorStop(0, `rgba(255, 235, 160, ${alpha})`);
+      g.addColorStop(0.5, `rgba(212, 175, 55, ${alpha * 0.5})`);
+      g.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, WIDTH, HEIGHT);
+      ctx.restore();
+    }
+
+    function drawGoldStardustTransition(progress) {
+      ctx.save();
+      const alpha = Math.sin(progress * Math.PI) * 0.75;
+      ctx.fillStyle = `rgba(212, 175, 55, ${alpha * 0.25})`;
+      ctx.fillRect(0, 0, WIDTH, HEIGHT);
+      ctx.restore();
+    }
+
+    // ==========================================
+    // 6. MAIN ANIMATION LOOP & CONTROLS
+    // ==========================================
+    let lastPerfTime = performance.now();
+
+    function loop(now) {
+      if (isPlaying) {
+        const delta = Math.min(0.1, (now - lastPerfTime) / 1000);
+        currentTime += delta;
+        if (currentTime >= DURATION) {
+          currentTime = DURATION;
+          isPlaying = false;
+          playBtn.innerText = '↺ Replay';
+          stopAudioPlayback();
+        }
+      }
+      lastPerfTime = now;
+
+      // Update Scrubber & UI
+      scrubber.value = currentTime;
+      const curSec = Math.floor(currentTime);
+      const curMs = Math.floor((currentTime % 1) * 10);
+      timeDisplay.innerText = `00:${curSec < 10 ? '0' : ''}${curSec}.${curMs} / 00:40`;
+
+      // Highlight active scene pill
+      updateActivePill(currentTime);
+
+      // Render Video Frame
+      renderFrame(currentTime);
+
+      requestAnimationFrame(loop);
+    }
+
+    function togglePlay() {
+      if (currentTime >= DURATION) {
+        jumpTo(0.05);
+        return;
+      }
+      isPlaying = !isPlaying;
+      playBtn.innerText = isPlaying ? '❚❚ Pause' : '▶ Play Video';
+      if (isPlaying) {
+        lastPerfTime = performance.now();
+        startAudioPlayback(currentTime);
+      } else {
+        stopAudioPlayback();
+      }
+    }
+
+    function jumpTo(targetTime) {
+      currentTime = Math.max(0, Math.min(targetTime, DURATION));
+      scrubber.value = currentTime;
+      lastPerfTime = performance.now();
+      isPlaying = true;
+      playBtn.innerText = '❚❚ Pause';
+      startAudioPlayback(currentTime);
+    }
+
+    function updateActivePill(t) {
+      const pills = document.querySelectorAll('.scene-pill');
+      let activeIdx = 0;
+      if (t < 6.0) activeIdx = 0;
+      else if (t < 12.0) activeIdx = 1;
+      else if (t < 18.0) activeIdx = 2;
+      else if (t < 24.0) activeIdx = 3;
+      else if (t < 32.0) activeIdx = 4;
+      else if (t < 37.0) activeIdx = 5;
+      else activeIdx = 6;
+
+      pills.forEach((p, idx) => {
+        if (idx === activeIdx) p.classList.add('active');
+        else p.classList.remove('active');
+      });
+    }
+
+    scrubber.addEventListener('input', (e) => {
+      currentTime = parseFloat(e.target.value);
+      if (isPlaying) {
+        startAudioPlayback(currentTime);
+      }
+    });
+
+    function toggleFullscreen() {
+      const elem = document.getElementById('videoWrapper');
+      if (!document.fullscreenElement) {
+        elem.requestFullscreen().catch(() => {});
+      } else {
+        document.exitFullscreen().catch(() => {});
+      }
+    }
+
+    // ==========================================
+    // 7. EXPORT TO TRUE 1080p MP4 VIDEO (MediaRecorder)
+    // ==========================================
+    async function exportToMP4() {
+      if (typeof MediaRecorder === 'undefined') {
+        alert('Your browser does not support in-browser video recording. Please use Google Chrome or Edge.');
+        return;
+      }
+
+      const origIsPlaying = isPlaying;
+      isPlaying = false;
+      stopAudioPlayback();
+
+      exportBtn.disabled = true;
+      exportBtn.innerText = '⏳ Rendering 1080p MP4 (0%)...';
+
+      // Setup offline canvas stream & Web Audio stream
+      const exportCanvas = document.createElement('canvas');
+      exportCanvas.width = WIDTH;
+      exportCanvas.height = HEIGHT;
+      const expCtx = exportCanvas.getContext('2d', { alpha: false });
+
+      const stream = exportCanvas.captureStream(FPS);
+
+      initAudio();
+      if (!audioBuffer) {
+        audioBuffer = createSitarAudioBuffer(audioCtx, DURATION + 2);
+      }
+      const audioDst = audioCtx.createMediaStreamDestination();
+      const aSrc = audioCtx.createBufferSource();
+      aSrc.buffer = audioBuffer;
+      const aGain = audioCtx.createGain();
+      aGain.gain.setValueAtTime(1.0, audioCtx.currentTime);
+      aSrc.connect(aGain);
+      aGain.connect(audioDst);
+
+      // Add audio track to stream
+      if (audioEnabled && audioDst.stream.getAudioTracks().length > 0) {
+        stream.addTrack(audioDst.stream.getAudioTracks()[0]);
+      }
+
+      // Pick supported MP4 MIME type
+      const mimeTypes = [
+        'video/mp4;codecs=avc1,mp4a.40.2',
+        'video/mp4;codecs=avc1',
+        'video/mp4',
+        'video/webm;codecs=vp9,opus',
+        'video/webm'
+      ];
+      let selectedMime = 'video/webm';
+      for (const m of mimeTypes) {
+        if (MediaRecorder.isTypeSupported(m)) {
+          selectedMime = m;
+          break;
+        }
+      }
+
+      const recorder = new MediaRecorder(stream, {
+        mimeType: selectedMime,
+        videoBitsPerSecond: 12000000 // 12 Mbps Full HD
+      });
+
+      const chunks = [];
+      recorder.ondataavailable = (e) => {
+        if (e.data && e.data.size > 0) chunks.push(e.data);
+      };
+
+      const renderDonePromise = new Promise((resolve) => {
+        recorder.onstop = () => {
+          const ext = selectedMime.includes('mp4') ? 'mp4' : 'webm';
+          const blob = new Blob(chunks, { type: selectedMime });
+          const file = new File([blob], `AaravSharma_AnanyaPatel_Wedding_Invitation.${ext}`, { type: selectedMime });
+          const url = URL.createObjectURL(file);
+
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `AaravSharma_AnanyaPatel_Wedding_Invitation.${ext}`;
+          document.body.appendChild(a);
+          a.click();
+          setTimeout(() => document.body.removeChild(a), 500);
+
+          exportBtn.disabled = false;
+          exportBtn.innerText = '⬇ Export MP4 Video (1080p, 40s)';
+          resolve();
+        };
+      });
+
+      recorder.start();
+      aSrc.start(0, 0);
+
+      const totalFrames = DURATION * FPS; // 1200 frames
+      const frameDurationMs = 1000 / FPS;
+      const startWallClock = performance.now();
+
+      for (let f = 0; f < totalFrames; f++) {
+        const frameTime = f / FPS;
+        currentTime = frameTime;
+
+        // Render onto export canvas
+        ctx.drawImage(canvas, 0, 0); // show on screen
+        renderFrame(frameTime);
+        expCtx.drawImage(canvas, 0, 0);
+
+        if (f % 30 === 0) {
+          const pct = Math.floor((f / totalFrames) * 100);
+          exportBtn.innerText = `⏳ Rendering 1080p MP4 (${pct}%)...`;
+        }
+
+        // Keep real-time sync with MediaRecorder
+        const targetMs = startWallClock + (f + 1) * frameDurationMs;
+        const now = performance.now();
+        const waitMs = targetMs - now;
+        if (waitMs > 1) {
+          await new Promise((r) => setTimeout(r, waitMs));
+        } else {
+          await new Promise((r) => setTimeout(r, 2));
+        }
+      }
+
+      recorder.stop();
+      try { aSrc.stop(); } catch(e) {}
+      await renderDonePromise;
+    }
+
+    // ==========================================
+    // 8. AUTO-INITIALIZE ON LOAD
+    // ==========================================
+    window.onload = () => {
+      // Initialize Canvas
+      renderFrame(0.05);
+
+      // Start audio & play
+      document.body.addEventListener('click', () => {
+        initAudio();
+        if (isPlaying && !audioSource) {
+          startAudioPlayback(currentTime);
+        }
+      }, { once: true });
+
+      requestAnimationFrame(loop);
+    };
+  </script>
+</body>
+</html>
