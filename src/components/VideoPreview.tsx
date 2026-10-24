@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Play, Pause, RotateCcw, Volume2, VolumeX, Maximize2 } from 'lucide-react';
+import { Play, Pause, RotateCcw, Volume2, VolumeX, Maximize2, Download } from 'lucide-react';
 import type { WeddingProject } from '../types/wedding';
 import { preloadProjectImages, renderTemplateFrame, type LoadedImages } from '../services/videoRenderer';
 import { audioService } from '../services/audioService';
@@ -10,7 +10,7 @@ interface VideoPreviewProps {
   onOpenEditorTab?: (tab: string) => void;
 }
 
-const SCENE_NAMES = [
+const TEMPLE_SCENE_NAMES = [
   '1. Temple Awakening',
   '2. Sacred Invitation',
   '3. Couple Reveal',
@@ -18,6 +18,16 @@ const SCENE_NAMES = [
   '5. Auspicious Date',
   '6. Venue Celebration',
   '7. Grand Finale',
+];
+
+const KASHI_SCENE_NAMES = [
+  '1. दिव्य मंगल आरम्भ (Divya Aarambh)',
+  '2. काशी की दिव्य आभा (Kashi Aabha)',
+  '3. शुभ विवाह पत्रिका (Vivah Patrika)',
+  '4. दिव्य विवाह मंडप (Havan Kund)',
+  '5. वर-वधू नाम दर्शन (Var-Vadhu)',
+  '6. मंगल शुभकामनाएँ (Shubhkamnayen)',
+  '7. राजसी मंगल समापन (Samapan)',
 ];
 
 export const VideoPreview: React.FC<VideoPreviewProps> = ({
@@ -33,9 +43,16 @@ export const VideoPreview: React.FC<VideoPreviewProps> = ({
   const [volume, setVolume] = useState<number>(project.audio.volume || 0.85);
   const [isMuted, setIsMuted] = useState<boolean>(!project.audio.enabled);
 
+  const timeRef = useRef<number>(0);
+  const isPlayingRef = useRef<boolean>(isPlaying);
+  useEffect(() => {
+    isPlayingRef.current = isPlaying;
+  }, [isPlaying]);
+
   const duration = project.videoSettings?.durationSeconds || 45;
   const sceneDuration = duration / 7;
   const currentSceneIndex = Math.min(6, Math.floor(currentTime / sceneDuration));
+  const activeSceneNames = project.templateId === 'sampoorna-kashi' ? KASHI_SCENE_NAMES : TEMPLE_SCENE_NAMES;
 
   // Preload images whenever project photos change
   useEffect(() => {
@@ -71,31 +88,35 @@ export const VideoPreview: React.FC<VideoPreviewProps> = ({
     audioService.setPreviewVolume(isMuted ? 0 : volume);
   }, [volume, isMuted]);
 
-  // Animation frame loop
+  // High-performance smooth animation frame loop (60 FPS)
   useEffect(() => {
     let animId: number;
     let lastTime = performance.now();
+    let lastUIUpdateTime = performance.now();
 
     const loop = (now: number) => {
-      const delta = (now - lastTime) / 1000;
+      const delta = Math.min(0.1, (now - lastTime) / 1000);
       lastTime = now;
 
-      if (isPlaying) {
-        setCurrentTime((prev) => {
-          const next = prev + delta;
-          if (next >= duration) {
-            return 0; // Loop seamlessly
-          }
-          return next;
-        });
+      if (isPlayingRef.current) {
+        timeRef.current += delta;
+        if (timeRef.current >= duration) {
+          timeRef.current = 0; // Loop seamlessly
+        }
+
+        // Throttle React state update to ~15 FPS to avoid re-rendering entire component tree 60 times/sec
+        if (now - lastUIUpdateTime > 65) {
+          setCurrentTime(timeRef.current);
+          lastUIUpdateTime = now;
+        }
       }
 
-      // Draw active frame to canvas
+      // Draw active frame to canvas smoothly at full 60 FPS
       const canvas = canvasRef.current;
       if (canvas) {
         const ctx = canvas.getContext('2d');
         if (ctx) {
-          renderTemplateFrame(ctx, canvas.width, canvas.height, currentTime, duration, project, loadedImages);
+          renderTemplateFrame(ctx, canvas.width, canvas.height, timeRef.current, duration, project, loadedImages);
         }
       }
 
@@ -104,12 +125,20 @@ export const VideoPreview: React.FC<VideoPreviewProps> = ({
 
     animId = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(animId);
-  }, [isPlaying, currentTime, duration, project, loadedImages]);
+  }, [duration, project, loadedImages]);
 
   // Scene navigation jump
   const jumpToScene = (sceneIdx: number) => {
     const target = sceneIdx * sceneDuration + 0.05;
+    timeRef.current = target;
     setCurrentTime(target);
+    const canvas = canvasRef.current;
+    if (canvas) {
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        renderTemplateFrame(ctx, canvas.width, canvas.height, target, duration, project, loadedImages);
+      }
+    }
   };
 
   const handlePlayPause = () => {
@@ -117,6 +146,7 @@ export const VideoPreview: React.FC<VideoPreviewProps> = ({
   };
 
   const handleReplay = () => {
+    timeRef.current = 0;
     setCurrentTime(0);
     setIsPlaying(true);
   };
@@ -168,7 +198,7 @@ export const VideoPreview: React.FC<VideoPreviewProps> = ({
             TEMPLATE: {project.templateId.toUpperCase().replace('-', ' ')}
           </span>
           <span style={{ fontSize: '0.82rem', color: '#A09D97' }}>
-            Scene {currentSceneIndex + 1} of 7: <strong style={{ color: '#FFE494' }}>{SCENE_NAMES[currentSceneIndex]}</strong>
+            Scene {currentSceneIndex + 1} of 7: <strong style={{ color: '#FFE494' }}>{activeSceneNames[currentSceneIndex]}</strong>
           </span>
         </div>
 
@@ -187,9 +217,19 @@ export const VideoPreview: React.FC<VideoPreviewProps> = ({
             <button
               onClick={onOpenGenerator}
               className="btn btn-gold"
-              style={{ padding: '6px 14px', fontSize: '0.82rem' }}
+              id="preview-header-download-btn"
+              style={{
+                padding: '8px 18px',
+                fontSize: '0.85rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 7,
+                fontWeight: 700,
+                boxShadow: '0 0 14px rgba(212, 175, 55, 0.35)',
+              }}
             >
-              Export Video
+              <Download size={16} />
+              <span>Download Video (1080p)</span>
             </button>
           )}
         </div>
@@ -266,7 +306,18 @@ export const VideoPreview: React.FC<VideoPreviewProps> = ({
             max={duration}
             step={0.1}
             value={currentTime}
-            onChange={(e) => setCurrentTime(parseFloat(e.target.value))}
+            onChange={(e) => {
+              const val = parseFloat(e.target.value);
+              timeRef.current = val;
+              setCurrentTime(val);
+              const canvas = canvasRef.current;
+              if (canvas) {
+                const ctx = canvas.getContext('2d');
+                if (ctx) {
+                  renderTemplateFrame(ctx, canvas.width, canvas.height, val, duration, project, loadedImages);
+                }
+              }
+            }}
             style={{
               flex: 1,
               accentColor: '#D4AF37',
@@ -297,7 +348,7 @@ export const VideoPreview: React.FC<VideoPreviewProps> = ({
                 cursor: 'pointer',
                 transition: 'background 0.2s',
               }}
-              title={SCENE_NAMES[idx]}
+              title={activeSceneNames[idx]}
             />
           ))}
         </div>
@@ -383,7 +434,7 @@ export const VideoPreview: React.FC<VideoPreviewProps> = ({
           gap: 4,
           flexWrap: 'wrap',
         }}>
-          {SCENE_NAMES.map((_, idx) => (
+          {activeSceneNames.map((_, idx) => (
             <button
               key={idx}
               onClick={() => jumpToScene(idx)}
@@ -419,6 +470,27 @@ export const VideoPreview: React.FC<VideoPreviewProps> = ({
           >
             <Maximize2 size={16} />
           </button>
+
+          {onOpenGenerator && (
+            <button
+              onClick={onOpenGenerator}
+              className="btn btn-gold"
+              id="player-bar-download-btn"
+              style={{
+                padding: '6px 14px',
+                borderRadius: 6,
+                fontSize: '0.78rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                fontWeight: 700,
+              }}
+              title="Download Full HD 1080p Video"
+            >
+              <Download size={14} />
+              <span>Download</span>
+            </button>
+          )}
         </div>
       </div>
     </div>

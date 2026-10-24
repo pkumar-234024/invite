@@ -3,7 +3,8 @@ import { audioService } from './audioService';
 import { getBrowserCapabilities } from './browserCapabilities';
 import { indexedDBService } from './indexedDBService';
 
-// Import all 13 renderers
+// Import all renderers
+import { renderSampoornaKashi } from '../templates/renderers/sampoornaKashi';
 import { renderDivineTemple } from '../templates/renderers/divineTemple';
 import { renderSampoornaHindi } from '../templates/renderers/sampoornaHindi';
 import { renderRoyalCreamPalace } from '../templates/renderers/royalCreamPalace';
@@ -96,6 +97,9 @@ export function renderTemplateFrame(
   const templateId: TemplateId = project.templateId || 'royal-maharaja';
 
   switch (templateId) {
+    case 'sampoorna-kashi':
+      renderSampoornaKashi(ctx, width, height, time, duration, project, images);
+      break;
     case 'divine-temple':
       renderDivineTemple(ctx, width, height, time, duration, project, images);
       break;
@@ -238,7 +242,6 @@ export async function generateWeddingVideo(
   // Determine recording MIME type
   const capabilities = getBrowserCapabilities();
   const mimeType = capabilities.preferredMimeType;
-  const format = capabilities.preferredExtension;
 
   // Stream setup
   const canvasStream = canvas.captureStream(fps);
@@ -279,6 +282,8 @@ export async function generateWeddingVideo(
   });
 
   const frameTime = 1 / fps;
+  const frameDurationMs = 1000 / fps;
+  const renderStartTime = performance.now();
 
   for (let frame = 0; frame < totalFrames; frame++) {
     if (abortSignal?.aborted) {
@@ -293,9 +298,10 @@ export async function generateWeddingVideo(
     renderTemplateFrame(ctx, width, height, currentTime, duration, project, loadedImages);
 
     // Yield back periodically to keep browser UI responsive and report real progress
-    if (frame % 3 === 0 || frame === totalFrames - 1) {
+    if (frame % 4 === 0 || frame === totalFrames - 1) {
       const renderProgress = frame / totalFrames;
       const percent = Math.floor(30 + renderProgress * 60);
+      const remainingSeconds = Math.max(0, Math.ceil(duration - currentTime));
 
       onProgress({
         stage: 'rendering_frames',
@@ -303,11 +309,20 @@ export async function generateWeddingVideo(
         currentFrame: frame + 1,
         totalFrames,
         fps,
-        message: `Rendering animation frames: ${frame + 1} / ${totalFrames} (${percent}%) - ${((frame + 1) / fps).toFixed(1)}s / ${duration}s`,
+        message: `Recording: Frame ${frame + 1} / ${totalFrames} (${percent}%) • ${remainingSeconds}s remaining (${((frame + 1) / fps).toFixed(1)}s / ${duration}s)`,
       });
+    }
 
-      // Small tick to ensure browser paints and MediaRecorder consumes the stream
-      await new Promise((r) => setTimeout(r, 20));
+    // Synchronize frames with real-time clock so MediaRecorder captures at authentic 30 FPS
+    const expectedTime = renderStartTime + (frame + 1) * frameDurationMs;
+    const now = performance.now();
+    const waitMs = expectedTime - now;
+
+    if (waitMs > 1) {
+      await new Promise((r) => setTimeout(r, waitMs));
+    } else {
+      // Small yield to allow MediaRecorder to process stream data
+      await new Promise((r) => setTimeout(r, 2));
     }
   }
 
@@ -322,9 +337,14 @@ export async function generateWeddingVideo(
   });
 
   // Stop recording and gather Blob
+  const actualMime = recorder.mimeType || mimeType;
+  const isMp4 = actualMime.toLowerCase().includes('mp4');
+  const detectedFormat: 'mp4' | 'webm' = isMp4 ? 'mp4' : 'webm';
+  const cleanMime = isMp4 ? 'video/mp4' : 'video/webm';
+
   const videoBlob = await new Promise<Blob>((resolve) => {
     recorder.onstop = () => {
-      const blob = new Blob(recordedChunks, { type: mimeType });
+      const blob = new Blob(recordedChunks, { type: cleanMime });
       resolve(blob);
     };
     recorder.stop();
@@ -351,13 +371,13 @@ export async function generateWeddingVideo(
     videoBlob,
     videoUrl,
     fileSize: sizeMB,
-    format,
+    format: detectedFormat,
   });
 
   return {
     blob: videoBlob,
     url: videoUrl,
-    format,
+    format: detectedFormat,
     fileSize: sizeMB,
   };
 }

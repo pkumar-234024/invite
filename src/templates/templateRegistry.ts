@@ -2,6 +2,21 @@ import type { TemplateDefinition, TemplateId } from '../types/wedding';
 
 export const WEDDING_TEMPLATES: TemplateDefinition[] = [
   {
+    id: 'sampoorna-kashi',
+    name: 'Sampoorna Kashi Shubh Vivah',
+    hindiName: 'सम्पूर्ण काशी शुभ विवाह',
+    tagline: 'Kashi Ghats, sacred Agni Havan Kund, 24K Swarna gold & authentic Banarasi Patrika',
+    description: 'Ultra-premium 7-scene 45s cinematic Hindu wedding invitation inspired by ancient Kashi temple architecture, sacred Agni Kund, Swarna Dhara 2.0 transitions, and royal Devanagari calligraphy.',
+    colorTheme: 'Sindoor Red, Royal Maroon & 24K Swarna Gold',
+    primaryColor: '#8B0000',
+    secondaryColor: '#FFD700',
+    accentColor: '#FDB813',
+    bgGradient: 'radial-gradient(circle at center, #8B0000 0%, #580812 65%, #220307 100%)',
+    category: 'Traditional',
+    previewBadge: 'Masterpiece • 4K Cinematic',
+    features: ['Kashi Ghats & Temple Silhouettes', 'Sacred Animated Havan Kund & Agni', 'Swarna Dhara 2.0 Gold Cascade', '45s 7-Scene Pure Vedic Grandeur'],
+  },
+  {
     id: 'divine-temple',
     name: 'Divine Temple Wedding',
     hindiName: 'दिव्य मंदिर विवाह',

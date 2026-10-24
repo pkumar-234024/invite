@@ -69,6 +69,7 @@ export type TransitionType =
   | 'zoom-push';
 
 export type TemplateId =
+  | 'sampoorna-kashi'
   | 'divine-temple'
   | 'sampoorna-hindi'
   | 'royal-cream-palace'

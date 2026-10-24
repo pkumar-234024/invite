@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Film, Palette, Music, Settings, Edit3, Image, Sparkles } from 'lucide-react';
+import { Palette, Music, Settings, Edit3, Image, Sparkles, Download } from 'lucide-react';
 import type { WeddingProject, TransitionType, PhotoFrameShape, PhotoFilter } from '../types/wedding';
 import { VideoPreview } from './VideoPreview';
 import { WEDDING_TEMPLATES } from '../templates/templateRegistry';
@@ -92,9 +92,10 @@ export const VideoEditor: React.FC<VideoEditorProps> = ({
         <button
           onClick={onOpenGenerator}
           className="btn btn-gold"
-          style={{ padding: '10px 24px', fontSize: '0.95rem' }}
+          id="editor-top-download-btn"
+          style={{ padding: '10px 24px', fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: 8, fontWeight: 700 }}
         >
-          <Film size={18} /> Generate Video (1080p)
+          <Download size={18} /> Download Video (1080p)
         </button>
       </div>
 
@@ -598,9 +599,10 @@ export const VideoEditor: React.FC<VideoEditorProps> = ({
           <button
             onClick={onOpenGenerator}
             className="btn btn-gold"
-            style={{ width: '100%', padding: '12px', fontSize: '1rem', marginTop: 10 }}
+            id="editor-bottom-download-btn"
+            style={{ width: '100%', padding: '14px', fontSize: '1.02rem', marginTop: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, fontWeight: 700 }}
           >
-            <Film size={18} /> Generate Wedding Video
+            <Download size={20} /> Download Wedding Video (1080p)
           </button>
         </div>
       </div>
