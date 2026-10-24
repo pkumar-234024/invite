@@ -4,22 +4,9 @@ import { getBrowserCapabilities } from './browserCapabilities';
 import { indexedDBService } from './indexedDBService';
 
 // Import all renderers
-import { renderSampoornaKashi } from '../templates/renderers/sampoornaKashi';
-import { renderDivineTemple } from '../templates/renderers/divineTemple';
 import { renderSampoornaHindi } from '../templates/renderers/sampoornaHindi';
-import { renderSampoornaSarvajan } from '../templates/renderers/sampoornaSarvajan';
-import { renderRoyalCreamPalace } from '../templates/renderers/royalCreamPalace';
-import { renderCinematicWedding } from '../templates/renderers/cinematicWedding';
-import { renderClassicIndian } from '../templates/renderers/classicIndian';
-import { renderFloralDreams } from '../templates/renderers/floralDreams';
-import { renderFloralMandap } from '../templates/renderers/floralMandap';
-import { renderGoldenCelebration } from '../templates/renderers/goldenCelebration';
-import { renderModernLove } from '../templates/renderers/modernLove';
-import { renderRoyalMaharaja } from '../templates/renderers/royalMaharaja';
-import { renderRoyalRajasthani } from '../templates/renderers/royalRajasthani';
-import { renderShubhVivah } from '../templates/renderers/shubhVivah';
-import { renderTraditionalIndian } from '../templates/renderers/traditionalIndian';
 import { drawCinematicTransition } from '../templates/renderers/common';
+
 
 export interface LoadedImages {
   bride?: HTMLImageElement;
@@ -98,58 +85,17 @@ export function renderTemplateFrame(
   const templateId: TemplateId = project.templateId || 'royal-maharaja';
 
   switch (templateId) {
-    case 'sampoorna-kashi':
-      renderSampoornaKashi(ctx, width, height, time, duration, project, images);
-      break;
-    case 'divine-temple':
-      renderDivineTemple(ctx, width, height, time, duration, project, images);
-      break;
     case 'sampoorna-hindi':
       renderSampoornaHindi(ctx, width, height, time, duration, project, images);
       break;
-    case 'sampoorna-sarvajan':
-      renderSampoornaSarvajan(ctx, width, height, time, duration, project, images);
-      break;
-    case 'royal-cream-palace':
-      renderRoyalCreamPalace(ctx, width, height, time, duration, project, images);
-      break;
-    case 'royal-maharaja':
-      renderRoyalMaharaja(ctx, width, height, time, duration, project, images);
-      break;
-    case 'shubh-vivah':
-      renderShubhVivah(ctx, width, height, time, duration, project, images);
-      break;
-    case 'royal-rajasthani':
-      renderRoyalRajasthani(ctx, width, height, time, duration, project, images);
-      break;
-    case 'floral-dreams':
-      renderFloralDreams(ctx, width, height, time, duration, project, images);
-      break;
-    case 'modern-love':
-      renderModernLove(ctx, width, height, time, duration, project, images);
-      break;
-    case 'golden-celebration':
-      renderGoldenCelebration(ctx, width, height, time, duration, project, images);
-      break;
-    case 'traditional-indian':
-      renderTraditionalIndian(ctx, width, height, time, duration, project, images);
-      break;
-    case 'cinematic-wedding':
-      renderCinematicWedding(ctx, width, height, time, duration, project, images);
-      break;
-    case 'floral-mandap':
-      renderFloralMandap(ctx, width, height, time, duration, project, images);
-      break;
-    case 'classic-indian':
-      renderClassicIndian(ctx, width, height, time, duration, project, images);
-      break;
-    default:
-      renderDivineTemple(ctx, width, height, time, duration, project, images);
-      break;
+
+
+
+
   }
 
   // Draw cinematic transition between scenes for other templates (Divine Temple has built-in exact 6 scene transitions)
-  if (templateId !== 'divine-temple') {
+  if (templateId !== 'sampoorna-hindi') {
     const sceneDuration = duration / 7;
     const sceneProgress = (time % sceneDuration) / sceneDuration;
     drawCinematicTransition(
@@ -385,3 +331,4 @@ export async function generateWeddingVideo(
     fileSize: sizeMB,
   };
 }
+
