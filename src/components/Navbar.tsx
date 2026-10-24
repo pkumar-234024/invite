@@ -1,4 +1,4 @@
-import { Film, Sparkles, ShieldCheck } from 'lucide-react';
+import { Sparkles, ShieldCheck, Download } from 'lucide-react';
 
 interface NavbarProps {
   currentTab: 'home' | 'create' | 'templates' | 'editor' | 'projects';
@@ -222,16 +222,19 @@ export const Navbar: React.FC<NavbarProps> = ({
           <button
             onClick={onOpenGenerator}
             className="btn btn-gold"
+            id="navbar-download-btn"
             style={{
-              padding: '8px 18px',
-              fontSize: '0.88rem',
+              padding: '8px 20px',
+              fontSize: '0.9rem',
               display: 'flex',
               alignItems: 'center',
               gap: 8,
+              fontWeight: 700,
+              boxShadow: '0 0 14px rgba(212, 175, 55, 0.35)',
             }}
           >
-            <Film size={18} />
-            <span>Generate Video</span>
+            <Download size={18} />
+            <span>Download Video</span>
           </button>
         </div>
       </div>

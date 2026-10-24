@@ -23,10 +23,11 @@ export interface SystemCapabilities {
 }
 
 const CANDIDATE_MIME_TYPES: { mimeType: string; extension: 'mp4' | 'webm'; label: string; isMp4: boolean }[] = [
-  // MP4 Candidates
-  { mimeType: 'video/mp4;codecs=avc1.42E01E,mp4a.40.2', extension: 'mp4', label: 'H.264 / AAC (MP4 High Profile)', isMp4: true },
-  { mimeType: 'video/mp4;codecs=avc1', extension: 'mp4', label: 'H.264 (MP4 Generic)', isMp4: true },
-  { mimeType: 'video/mp4', extension: 'mp4', label: 'MP4 (Native Browser Container)', isMp4: true },
+  // MP4 Candidates (Native H.264 video with AAC/Opus audio)
+  { mimeType: 'video/mp4;codecs=avc1,mp4a.40.2', extension: 'mp4', label: 'H.264 / AAC (MP4 High Profile)', isMp4: true },
+  { mimeType: 'video/mp4;codecs=avc1', extension: 'mp4', label: 'H.264 (MP4 Standard)', isMp4: true },
+  { mimeType: 'video/mp4', extension: 'mp4', label: 'MP4 (Standard Video Container)', isMp4: true },
+  { mimeType: 'video/mp4;codecs=avc1.42E01E,mp4a.40.2', extension: 'mp4', label: 'H.264 / AAC (MP4 Baseline)', isMp4: true },
   
   // WebM Candidates (High quality VP9 / VP8 with Opus)
   { mimeType: 'video/webm;codecs=vp9,opus', extension: 'webm', label: 'VP9 / Opus (WebM Modern)', isMp4: false },
