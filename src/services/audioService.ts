@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Audio Service using Web Audio API
  * Generates beautiful, authentic royalty-free traditional Indian wedding instrumental soundscapes
  * (Shehnai, Sitar, Tanpura harmonics, Temple bells) fully client-side without external dependencies.
@@ -444,6 +444,22 @@ class AudioService {
    * Get an audio stream node connected for MediaRecorder during video export
    * with trim offset, fade-in, and fade-out
    */
+  async ensureContext(): Promise<AudioContext> {
+    const ctx = this.getContext();
+    if (ctx.state === 'suspended') {
+      try {
+        await ctx.resume();
+      } catch (err) {
+        console.warn('AudioContext resume error:', err);
+      }
+    }
+    return ctx;
+  }
+
+  /**
+   * Get an audio stream node connected for MediaRecorder during video export
+   * with trim offset, fade-in, and synchronized playback start.
+   */
   async createExportAudioTrack(
     trackId: string,
     volume: number,
@@ -451,8 +467,13 @@ class AudioService {
     startTime: number = 0,
     fadeIn: boolean = true,
     fadeOut: boolean = true
-  ): Promise<{ destination: MediaStreamAudioDestinationNode; stop: () => void; ctx: AudioContext }> {
-    const ctx = this.getContext();
+  ): Promise<{
+    destination: MediaStreamAudioDestinationNode;
+    start: () => void;
+    stop: () => void;
+    ctx: AudioContext;
+  }> {
+    const ctx = await this.ensureContext();
     const destination = ctx.createMediaStreamDestination();
     const buffer = await this.getTrackBuffer(ctx, trackId, startTime + durationSeconds + 5);
 
@@ -462,31 +483,45 @@ class AudioService {
     const gain = ctx.createGain();
     const targetVol = Math.max(0.001, Math.min(1, volume));
 
-    if (fadeIn) {
-      gain.gain.setValueAtTime(0.001, ctx.currentTime);
-      gain.gain.linearRampToValueAtTime(targetVol, ctx.currentTime + 1.5);
-    } else {
-      gain.gain.setValueAtTime(targetVol, ctx.currentTime);
-    }
-
-    if (fadeOut && durationSeconds > 3) {
-      gain.gain.setValueAtTime(targetVol, ctx.currentTime + durationSeconds - 2.5);
-      gain.gain.linearRampToValueAtTime(0.001, ctx.currentTime + durationSeconds);
-    }
-
     source.connect(gain);
     gain.connect(destination);
 
     const offset = Math.max(0, Math.min(startTime, Math.max(0, buffer.duration - 2)));
-    source.start(ctx.currentTime, offset, durationSeconds + 0.5);
+
+    let isStarted = false;
+    const start = () => {
+      if (isStarted) return;
+      isStarted = true;
+
+      if (ctx.state === 'suspended') {
+        ctx.resume().catch(() => {});
+      }
+
+      const now = ctx.currentTime;
+      if (fadeIn) {
+        gain.gain.setValueAtTime(0.001, now);
+        gain.gain.linearRampToValueAtTime(targetVol, now + 1.5);
+      } else {
+        gain.gain.setValueAtTime(targetVol, now);
+      }
+
+      if (fadeOut && durationSeconds > 3) {
+        gain.gain.setValueAtTime(targetVol, now + durationSeconds - 2.5);
+        gain.gain.linearRampToValueAtTime(0.001, now + durationSeconds);
+      }
+
+      source.start(now, offset, durationSeconds + 1.0);
+    };
 
     return {
       destination,
       ctx,
+      start,
       stop: () => {
         try {
           source.stop();
           source.disconnect();
+          gain.disconnect();
         } catch {
           // ignore
         }
@@ -496,3 +531,4 @@ class AudioService {
 }
 
 export const audioService = new AudioService();
+

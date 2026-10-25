@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Browser Capabilities Service
  * Honest inspection of MediaRecorder supported MIME types, Web Audio API, Canvas rendering, and storage.
  */
@@ -23,17 +23,17 @@ export interface SystemCapabilities {
 }
 
 const CANDIDATE_MIME_TYPES: { mimeType: string; extension: 'mp4' | 'webm'; label: string; isMp4: boolean }[] = [
-  // MP4 Candidates (Native H.264 video with AAC/Opus audio)
+  // MP4 Candidates with Audio Support (Must support both video & audio tracks in MediaRecorder)
   { mimeType: 'video/mp4;codecs=avc1,mp4a.40.2', extension: 'mp4', label: 'H.264 / AAC (MP4 High Profile)', isMp4: true },
-  { mimeType: 'video/mp4;codecs=avc1', extension: 'mp4', label: 'H.264 (MP4 Standard)', isMp4: true },
-  { mimeType: 'video/mp4', extension: 'mp4', label: 'MP4 (Standard Video Container)', isMp4: true },
+  { mimeType: 'video/mp4;codecs=avc1,opus', extension: 'mp4', label: 'H.264 / Opus (MP4 Modern)', isMp4: true },
+  { mimeType: 'video/mp4', extension: 'mp4', label: 'MP4 Standard Container (Audio + Video)', isMp4: true },
   { mimeType: 'video/mp4;codecs=avc1.42E01E,mp4a.40.2', extension: 'mp4', label: 'H.264 / AAC (MP4 Baseline)', isMp4: true },
   
-  // WebM Candidates (High quality VP9 / VP8 with Opus)
+  // WebM Candidates with Audio (High quality VP9 / VP8 with Opus audio)
   { mimeType: 'video/webm;codecs=vp9,opus', extension: 'webm', label: 'VP9 / Opus (WebM Modern)', isMp4: false },
   { mimeType: 'video/webm;codecs=vp8,opus', extension: 'webm', label: 'VP8 / Opus (WebM Standard)', isMp4: false },
-  { mimeType: 'video/webm;codecs=h264', extension: 'webm', label: 'H.264 in WebM', isMp4: false },
-  { mimeType: 'video/webm', extension: 'webm', label: 'WebM Standard Container', isMp4: false },
+  { mimeType: 'video/webm;codecs=h264,opus', extension: 'webm', label: 'H.264 / Opus in WebM', isMp4: false },
+  { mimeType: 'video/webm', extension: 'webm', label: 'WebM Standard Container (Audio + Video)', isMp4: false },
 ];
 
 export function getBrowserCapabilities(): SystemCapabilities {
@@ -61,7 +61,7 @@ export function getBrowserCapabilities(): SystemCapabilities {
     };
   });
 
-  // Pick first supported MP4, or if none, first supported WebM
+  // Pick first supported MP4 that includes audio codecs, or if none, first supported WebM
   const supportedMp4 = availableCodecs.find((c) => c.supported && c.isMp4);
   const supportedWebM = availableCodecs.find((c) => c.supported && !c.isMp4);
 
@@ -75,7 +75,7 @@ export function getBrowserCapabilities(): SystemCapabilities {
 
   let hardwareNote: string | undefined;
   if (!supportedMp4) {
-    hardwareNote = 'Your current browser does not offer direct in-browser H.264 MP4 hardware encoding via MediaRecorder. Video will be exported in high-definition WebM (VP9/VP8 with Opus audio), which plays smoothly in all modern browsers, VLC, WhatsApp Web, and media editors.';
+    hardwareNote = 'Your current browser does not offer direct in-browser H.264 MP4 hardware encoding with audio via MediaRecorder. Video will be exported in high-definition WebM (VP9/VP8 with Opus audio), which plays smoothly in all modern browsers, VLC, WhatsApp Web, and media editors.';
   }
 
   return {

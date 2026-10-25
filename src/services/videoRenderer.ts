@@ -1,4 +1,4 @@
-import type { TemplateId, WeddingProject } from '../types/wedding';
+﻿import type { TemplateId, WeddingProject } from '../types/wedding';
 import { audioService } from './audioService';
 import { getBrowserCapabilities } from './browserCapabilities';
 import { indexedDBService } from './indexedDBService';
@@ -179,37 +179,56 @@ export async function generateWeddingVideo(
   const ctx = canvas.getContext('2d', { alpha: false });
   if (!ctx) throw new Error('Canvas 2D context is not available.');
 
-  // Audio track setup with trimming and fading
+  // Pre-render frame 0 onto canvas so the stream starts with valid pixels immediately
+  renderTemplateFrame(ctx, width, height, 0, duration, project, loadedImages);
+
+  // Robust Audio Configuration: default enabled to true if undefined
+  const isAudioEnabled = project.audio?.enabled !== false && (project.audio?.volume ?? 0.85) > 0;
+  const audioTrackId = project.audio?.trackId || 'wedding-shubh-vivah';
+  const audioVolume = project.audio?.volume ?? 0.85;
+  const audioStartTime = project.audio?.startTime || 0;
+  const audioFadeIn = project.audio?.fadeIn ?? true;
+  const audioFadeOut = project.audio?.fadeOut ?? true;
+
+  // Audio track setup with trimming, fading, and synchronized start
   const audioExport = await audioService.createExportAudioTrack(
-    project.audio.enabled ? project.audio.trackId : 'none',
-    project.audio.enabled ? project.audio.volume : 0,
+    isAudioEnabled ? audioTrackId : 'none',
+    isAudioEnabled ? audioVolume : 0,
     duration,
-    project.audio.startTime || 0,
-    project.audio.fadeIn ?? true,
-    project.audio.fadeOut ?? true
+    audioStartTime,
+    audioFadeIn,
+    audioFadeOut
   );
 
   // Determine recording MIME type
   const capabilities = getBrowserCapabilities();
   const mimeType = capabilities.preferredMimeType;
 
-  // Stream setup
+  // Stream setup: Combine canvas video tracks AND audio tracks into a unified MediaStream
   const canvasStream = canvas.captureStream(fps);
-  const audioTrack = audioExport.destination.stream.getAudioTracks()[0];
-  if (audioTrack && project.audio.enabled) {
-    canvasStream.addTrack(audioTrack);
-  }
+  const audioTracks = (isAudioEnabled && audioExport)
+    ? audioExport.destination.stream.getAudioTracks()
+    : [];
 
-  // MediaRecorder setup
+  const combinedStream = new MediaStream([
+    ...canvasStream.getVideoTracks(),
+    ...audioTracks,
+  ]);
+
+  // MediaRecorder setup with combined stream
   let recorder: MediaRecorder;
   try {
-    recorder = new MediaRecorder(canvasStream, {
+    recorder = new MediaRecorder(combinedStream, {
       mimeType,
       videoBitsPerSecond: is1080p ? 8000000 : 4500000,
     });
   } catch {
     // Fallback if specific codec option was rejected
-    recorder = new MediaRecorder(canvasStream);
+    try {
+      recorder = new MediaRecorder(combinedStream, { mimeType: 'video/webm' });
+    } catch {
+      recorder = new MediaRecorder(combinedStream);
+    }
   }
 
   const recordedChunks: Blob[] = [];
@@ -219,7 +238,11 @@ export async function generateWeddingVideo(
     }
   };
 
+  // Start recorder and synchronously start audio source together
   recorder.start(100);
+  if (isAudioEnabled && audioExport) {
+    audioExport.start();
+  }
 
   // 4. Render frames loop
   onProgress({
@@ -297,8 +320,18 @@ export async function generateWeddingVideo(
       const blob = new Blob(recordedChunks, { type: cleanMime });
       resolve(blob);
     };
-    recorder.stop();
-    audioExport.stop();
+    setTimeout(() => {
+      try {
+        recorder.stop();
+      } catch (err) {
+        console.warn('Recorder stop error:', err);
+      }
+      try {
+        audioExport.stop();
+      } catch (err) {
+        console.warn('Audio export stop error:', err);
+      }
+    }, 150);
   });
 
   const videoUrl = URL.createObjectURL(videoBlob);
